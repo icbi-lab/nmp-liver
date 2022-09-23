@@ -1,5 +1,6 @@
 _*.ipynb
 analyses/**/*.html
+analyses/**/*.ipynb
 .ipynb_checkpoints
 work
 .nextflow*

@@ -1,0 +1,2 @@
+id,input_adata,min_counts,max_counts,min_genes,max_genes,max_pct_mito
+NMP_Liver,data/02_anndata/nmp_liver_raw_counts_unfiltered.h5ad,1000,100000,250,8000,30

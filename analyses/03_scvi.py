@@ -12,6 +12,9 @@
 #     name: rik_ssh_apollo_15_apollo152022schneebergerliver
 # ---
 
+# %% [markdown]
+# # scVI preprocessing
+
 # %%
 import scvi
 import scanpy as sc

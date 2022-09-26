@@ -13,7 +13,18 @@
 # ---
 
 # %%
-# %load_ext autoreload
-# %autoreload 2
+import scanpy as sc
+
+# %%
+adata = sc.read_h5ad("../data/results/02_scvi/artifacts/adata_scvi_doublet_filtered.h5ad")
+
+# %%
+adata.obs.groupby(["patient_id", "timepoint"]).size().reset_index(name="n").set_index(["patient_id", "timepoint"])
+
+# %%
+from tqdm.notebook import tqdm
+
+# %%
+tqdm(range(10000000))
 
 # %%

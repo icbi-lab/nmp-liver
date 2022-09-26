@@ -1,0 +1,64 @@
+cell_type,gene_identifier,source
+Neutrophils,FCGR3B,
+Neutrophils,CSF3R,
+Neutrophils,G0S2,
+Neutrophils,CXCR2,
+Macrophages,CD163,
+Macrophages,VSIG4,
+Macrophages,CD68,
+cDC,FLT3,
+cDC,CD14,
+cDC,CST3,
+"cDC1","CLEC9A","madissoon"
+"cDC1","XCR1","madissoon"
+"cDC1","CLNK","schupp"
+"cDC2","CD1C","madissoon"
+"cDC2","CLEC10A","madissoon"
+"DC mature","CCR7","madissoon"
+"DC mature","CCL22","schupp"
+T cell,CD3E,
+T cell,CD8A,
+T cell,CD4,
+T cell,IL7R,
+T cell,CTLA4,
+"T cell regulatory","FOXP3","madissoon"
+"T cell regulatory","IL2RA","madissoon"
+NK,GNLY,
+NK,NKG7,
+NK,KLRD1,
+NK,NCAM1,
+Endo,CDH5,
+Endo,FLT1,
+Endo,SPARC,
+Progenitor,CEACAM8,
+Progenitor,CD24,
+Progenitor,BPI,
+Progenitor,MKI67,
+Hepatocytes,FGB,
+Hepatocytes,ALB,
+Hepatocytes,SAA1,
+Hepatocytes,KRT18,
+Cholangiocyte,TACSTD2,
+Cholangiocyte,KRT7,
+Cholangiocyte,KRT19,
+B cells,CD79A,
+B cells,MS4A1,
+B cells,KGHM,
+Plasma cells,MZB1,
+Plasma cells,JCHAIN,
+Macrophages inflammatory,S100A8,MacParland et al
+Macrophages inflammatory,LYZ,MacParland et al
+Macrophages inflammatory,S100A9,MacParland et al
+Macrophages non-inflammatory,CD5L,MacParland et al
+Macrophages non-inflammatory,MARCO,MacParland et al
+Macrophages non-inflammatory,VSIG4,MacParland et al
+"Dividing","MKI67","madissoon"
+"Dividing","CDK1","madissoon"
+"Epithelial","CAPS","lambrechts"
+"Epithelial","EPCAM","madissoon"
+"Monocyte","CD14","madissoon"
+"Monocyte","VCAN","madissoon"
+"Monocyte","FCN1","madissoon"
+"pDC","IL3RA","madissoon"
+"pDC","CLEC4C","madissoon"
+"Mast cells","TPSB2","madissoon"

@@ -9,3 +9,4 @@ from . import pairwise
 from . import colors
 from . import annotation
 from . import cell2cell
+from . import signatures

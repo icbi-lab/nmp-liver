@@ -5,6 +5,7 @@ import pandas as pd
 from operator import and_
 from functools import reduce
 import warnings
+import scanpy as sc
 
 
 def pseudobulk(
@@ -13,6 +14,7 @@ def pseudobulk(
     groupby: Union[str, Sequence[str]],
     aggr_fun=np.sum,
     min_obs=10,
+    log_norm=False
 ) -> AnnData:
     """
     Calculate Pseudobulk of groups
@@ -28,6 +30,8 @@ def pseudobulk(
         the `axis` attribute.
     min_obs
         Exclude groups with less than `min_obs` observations
+    log_norm
+        If True, compute log(CPM) of the result. Use this only when raw counts are in adata.X
 
     Returns
     -------
@@ -69,8 +73,14 @@ def pseudobulk(
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", ImplicitModificationWarning)
-        return AnnData(
+        adata = AnnData(
             X=np.vstack(expr_agg),
             var=adata.var,
             obs=pd.DataFrame.from_records(obs),
         )
+
+        if log_norm:
+            sc.pp.normalize_total(adata, target_sum=1e6)
+            sc.pp.log1p(adata)
+
+        return adata

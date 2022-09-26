@@ -189,7 +189,7 @@ sc.pl.umap(adata_nodoublet, color=["FCGR3B", "CD68", "FLT3", "CD3E", "GNLY", "FL
 # ## Save results
 
 # %%
-model.save(f"{artifact_dir}/scvi_model")
+model.save(f"{artifact_dir}/scvi_model", save_anndata=True)
 
 # %%
 adata.write_h5ad(f"{artifact_dir}/adata_scvi_before_doublets.h5ad")

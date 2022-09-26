@@ -191,3 +191,5 @@ ah.plot_dotplot(adata, groupby="cell_type")
 
 # %%
 adata.write_h5ad(f"{artifact_dir}/adata_cell_types.h5ad")
+
+# %%

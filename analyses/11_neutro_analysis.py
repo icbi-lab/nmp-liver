@@ -51,15 +51,21 @@ sc.pl.umap(adata, color="cell_type")
 adata_n = adata[adata.obs["cell_type"].str.startswith("Neutro"), :].copy()
 
 # %%
-pb_n = sh.pseudobulk.pseudobulk(adata_n, groupby=["patient_id", "cell_type"])
-sc.pp.normalize_total(pb_n, target_sum=1e6)
-sc.pp.log1p(pb_n, base=2)
-
-# %%
-sc.pp.neighbors(adata_n, use_rep="X_scVI")
+sc.pp.neighbors(adata_n, use_rep="X_scVI", n_neighbors=30)
 
 # %%
 sc.tl.umap(adata_n)
+
+# %%
+sc.tl.leiden(adata_n, resolution=0.25)
+
+# %%
+adata_n.obs["cell_type"] = ["N" + x for x in adata_n.obs["leiden"]]
+
+# %%
+pb_n = sh.pseudobulk.pseudobulk(adata_n, groupby=["patient_id", "cell_type"])
+sc.pp.normalize_total(pb_n, target_sum=1e6)
+sc.pp.log1p(pb_n, base=2)
 
 # %%
 with plt.rc_context({"figure.figsize": (6, 6)}):
@@ -134,8 +140,8 @@ for ct in tqdm(pb_n.obs["cell_type"].unique()):
 markers = {
     ct: pb_n.var.loc[
         lambda x: (x[f"{ct}_auroc"] >= 0.7)
-        & (x[f"{ct}_fc"] > 2)
-        & (x[f"{ct}_sfc"] > 1.5)
+        & (x[f"{ct}_fc"] > 1)
+        & (x[f"{ct}_sfc"] > 0)
     ]
     .sort_values(f"{ct}_auroc", ascending=False)
     .index.tolist()
@@ -155,6 +161,7 @@ with plt.rc_context({"figure.figsize": (6, 6)}):
 # %%
 for cluster, m in markers.items():
     print(cluster)
-    sc.pl.umap(adata_n, color=m[:10], ncols=5, cmap="inferno", size=10)
+    if len(m):
+        sc.pl.umap(adata_n, color=m[:10], ncols=5, cmap="inferno", size=10)
 
 # %%

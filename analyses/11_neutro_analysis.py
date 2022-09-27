@@ -165,3 +165,9 @@ for cluster, m in markers.items():
         sc.pl.umap(adata_n, color=m[:10], ncols=5, cmap="inferno", size=10)
 
 # %%
+with open(f"{artifact_dir}/markers_neutro.csv", 'w') as f:
+    for ct, genes in markers.items():
+        for g in genes:
+            f.write(f"{ct},{g}\n")        
+
+# %%

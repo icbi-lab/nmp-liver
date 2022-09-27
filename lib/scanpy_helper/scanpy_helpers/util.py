@@ -7,7 +7,6 @@ from anndata import AnnData
 import scipy.sparse
 
 
-
 def fdr_correction(df, pvalue_col="pvalue", *, key_added="fdr", inplace=False):
     """Adjust p-values in a data frame with test results using FDR correction."""
     if not inplace:
@@ -22,7 +21,8 @@ def fdr_correction(df, pvalue_col="pvalue", *, key_added="fdr", inplace=False):
 def split_anndata(adata, groupby):
     """Split an anndata object into a dict of anndata objects based on a column in obs"""
     categories = adata.obs[groupby].unique()
-    return {cat: adata[adata.obs[groupby] == cat, :].copy() for cat in tqdm(categories)}
+    for cat in categories:
+        yield cat, adata[adata.obs[groupby] == cat, :].copy()
 
 
 def chunk_adatas(ad, chunksize=200):
@@ -55,9 +55,6 @@ def _choose_mtx_rep(adata, use_raw=False, layer=None):
         return adata.raw.X
     else:
         return adata.X
-
-
-
 
 
 def scale_range(a):

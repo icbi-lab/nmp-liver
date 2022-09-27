@@ -44,18 +44,24 @@ sc.pl.umap(adata, color="cell_type")
 # ## Cluster overview
 
 # %%
-adata_m = adata[adata.obs["cell_type"].str.startswith("myeloid"), :].copy()
+adata_m = adata[adata.obs["cell_type"].str.startswith("monocytic lineage"), :].copy()
+
+# %%
+sc.pp.neighbors(adata_m, use_rep="X_scVI", n_neighbors=30)
+
+# %%
+sc.tl.leiden(adata_m, resolution=0.25)
+
+# %%
+sc.tl.umap(adata_m)
+
+# %%
+adata_m.obs["cell_type"] = ["M" + x for x in adata_m.obs["leiden"]]
 
 # %%
 pb_m = sh.pseudobulk.pseudobulk(adata_m, groupby=["patient_id", "cell_type"])
 sc.pp.normalize_total(pb_m, target_sum=1e6)
 sc.pp.log1p(pb_m, base=2)
-
-# %%
-sc.pp.neighbors(adata_m, use_rep="X_scVI")
-
-# %%
-sc.tl.umap(adata_m)
 
 # %%
 with plt.rc_context({"figure.figsize": (6, 6)}):
@@ -131,7 +137,7 @@ markers = {
     ct: pb_m.var.loc[
         lambda x: (x[f"{ct}_auroc"] >= 0.7)
         & (x[f"{ct}_fc"] > 2)
-        & (x[f"{ct}_sfc"] > 1.5)
+        & (x[f"{ct}_sfc"] > 0)
     ]
     .sort_values(f"{ct}_auroc", ascending=False)
     .index.tolist()
@@ -157,6 +163,7 @@ for cluster, m in markers.items():
 sc.pl.umap(adata_m, color=["S100A8", "LYZ", "S100A9", "MARCO", "CD5L", "VSIG4", "VCAN", "FCN1", "CD14"], ncols=3, cmap="inferno")
 
 # %%
-pb_m
-
-# %%
+with open(f"{artifact_dir}/markers_myeloid.csv", 'w') as f:
+    for ct, genes in markers.items():
+        for g in genes:
+            f.write(f"{ct},{g}\n")        

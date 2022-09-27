@@ -6,6 +6,10 @@ include { check_samplesheet } from './modules/local/check_samplesheet'
 include { SCQC } from "./modules/local/scqc/main"
 include { JUPYTERNOTEBOOK as JUPYTER_SCVI } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_CELL_TYPES } from "./modules/local/jupyternotebook/main"
+include { JUPYTERNOTEBOOK as JUPYTER_DE_ANALYSIS } from "./modules/local/jupyternotebook/main"
+include { DE_DESEQ2 as DESEQ_T0_T1 } from "./modules/local/scde.nf"
+include { DE_DESEQ2 as DESEQ_LT } from "./modules/local/scde.nf"
+include { DE_DESEQ2 as DESEQ_ECD } from "./modules/local/scde.nf"
 
 workflow {
 
@@ -44,6 +48,46 @@ workflow {
             "marker_genes_path": markers.name
         ]},
         ch_cell_type_annotation
+    )
+
+    ch_adata_cell_types = JUPYTER_CELL_TYPES.out.artifacts.flatten().filter{
+        it -> it.name.contains("adata_cell_types")
+    }
+
+    JUPYTER_DE_ANALYSIS(
+        Channel.value([
+            [id: "20_de_analysis"],
+            file("${projectDir}/analyses/20_de_analysis.py", checkIfExists: true)
+        ]),
+        ch_adata_cell_types.map{ adata -> [
+            "adata_path": adata.name
+        ]},
+        ch_adata_cell_types
+    )
+
+    ch_deseq = JUPYTER_DE_ANALYSIS.out.artifacts.flatten().map{
+        it -> [it.name.split("\\.")[0], it]
+    }.groupTuple(sort: true).map{
+        id, files -> [id, files[0], files[1]]
+    }
+
+    DESEQ_T0_T1(
+        ch_deseq.filter{ it -> it[0].contains("t0_vs_t1") },
+        ["T1", "T0"],
+        "timepoint",
+        "+ patient_id"
+    )
+    DESEQ_LT(
+        ch_deseq.filter{ it -> it[0].contains("LT_")},
+        ["Yes", "No"],
+        "LT",
+        ""
+    )
+    DESEQ_ECD(
+        ch_deseq.filter{ it -> it[0].contains("ECD_")},
+        ["Yes", "No"],
+        "ECD",
+        ""
     )
 
 }

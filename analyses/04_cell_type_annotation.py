@@ -186,10 +186,17 @@ sc.tl.umap(adata)
 # %%
 sc.pl.umap(adata, color="cell_type")
 
+# %% [markdown]
+# ## Coarse cell-type annotation
+
+# %%
+adata.obs["cell_type_coarse"] = ["T cell" if "T cell" in x else x for x in adata.obs["cell_type"]]
+
+# %%
+sc.pl.umap(adata, color="cell_type_coarse")
+
 # %%
 ah.plot_dotplot(adata, groupby="cell_type")
 
 # %%
 adata.write_h5ad(f"{artifact_dir}/adata_cell_types.h5ad")
-
-# %%

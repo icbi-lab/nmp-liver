@@ -52,6 +52,7 @@ class AnnotationHelper:
         markers=None,
         filter_cell_type: Optional[List] = None,
         groupby="leiden",
+        **kwargs,
     ):
         if markers is not None:
             tmp_markers = markers
@@ -59,7 +60,7 @@ class AnnotationHelper:
             tmp_markers = self.get_markers(filter_cell_type)
         marker_dict = self.get_marker_dict(tmp_markers, adata)
 
-        sc.pl.dotplot(adata, var_names=marker_dict, groupby=groupby)
+        return sc.pl.dotplot(adata, var_names=marker_dict, groupby=groupby, **kwargs)
 
     def plot_umap(
         self, adata, *, markers=None, filter_cell_type: Optional[List] = None, **kwargs
@@ -120,7 +121,7 @@ class AnnotationHelper:
                 prefix=prefix,
             )
 
-        sc.pl.dotplot(
+        return sc.pl.dotplot(
             adata,
             groupby=groupby,
             var_names=var_names,
@@ -239,4 +240,3 @@ class AnnotationHelper:
         ].astype("str")
         with plt.rc_context(plt_context):
             sc.pl.umap(adata, color=variable)
-

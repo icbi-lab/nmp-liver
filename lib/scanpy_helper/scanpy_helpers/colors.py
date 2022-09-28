@@ -79,4 +79,50 @@ def plot_all_palettes():
 
 
 class COLORS:
-    pass
+    timepoint = {
+        "T0": "#edf8b1",
+        "T1": "#7fcdbb",
+        "T2": "#2c7fb8",
+    }
+    patient_id = {
+        "P1": "#000000",
+        "P2": "#E69F00",
+        "P3": "#56B4E9",
+        "P4": "#009E73",
+        "P5": "#F0E442",
+        "P6": "#0072B2",
+        "P7": "#D55E00",
+        "P8": "#CC79A7",
+    }
+    cell_type = {
+        "B cells": "#1f77b4",
+        "Cholangiocytes": "#ff7f0e",
+        "Endothelial cells": "#279e68",
+        "Hepatocytes": "#aa40fc",
+        "Mast cells": "#8c564b",
+        "NK cell": "#e377c2",
+        "Neutrophils": "#b5bd61",
+        "Plasma cells": "#17becf",
+        "Progenitor": "#aec7e8",
+        "T cell CD4": "#ffbb78",
+        "T cell CD8": "#98df8a",
+        "T cell CD8 NK-like": "#ff9896",
+        "cDC": "#c5b0d5",
+        "monocytic lineage": "#c49c94",
+        "pDC": "#f7b6d2",
+    }
+    cell_type_coarse = {
+        "B cells": "#1f77b4",
+        "Cholangiocytes": "#ff7f0e",
+        "Endothelial cells": "#279e68",
+        "Hepatocytes": "#d62728",
+        "Mast cells": "#aa40fc",
+        "NK cell": "#8c564b",
+        "Neutrophils": "#e377c2",
+        "Plasma cells": "#b5bd61",
+        "Progenitor": "#17becf",
+        "T cell": "#aec7e8",
+        "cDC": "#ffbb78",
+        "monocytic lineage": "#98df8a",
+        "pDC": "#ff9896",
+    }

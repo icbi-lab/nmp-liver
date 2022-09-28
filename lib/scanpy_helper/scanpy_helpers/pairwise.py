@@ -118,24 +118,25 @@ def plot_paired_fc(
     )
     domain = np.max(np.abs([np.min(df_fc_melt["mean"]), np.max(df_fc_melt["mean"])]))
 
-    return (
-        alt.Chart(df_fc_melt.loc[:, ["variable", "mean"]].drop_duplicates())
-        .mark_bar()
-        .encode(
-            x=alt.X("variable", sort=order),
-            y="mean",
-            color=alt.Color(
-                "mean",
-                scale=alt.Scale(
-                    scheme="redblue",
-                    reverse=True,
-                    domain=[-domain, domain],
-                ),
+    return alt.Chart(
+        df_fc_melt.loc[:, ["variable", "mean"]].drop_duplicates()
+    ).mark_bar().encode(
+        x=alt.X("variable", sort=order),
+        y="mean",
+        color=alt.Color(
+            "mean",
+            scale=alt.Scale(
+                scheme="redblue",
+                reverse=True,
+                domain=[-domain, domain],
             ),
-        )
-        + alt.Chart(df_fc_melt)
-        .mark_circle(color="black")
-        .encode(x=alt.X("variable", sort=order), y=alt.Y("value", title=metric_name))
+        ),
+    ) + alt.Chart(
+        df_fc_melt
+    ).mark_circle(
+        color="black"
+    ).encode(
+        x=alt.X("variable", sort=order), y=alt.Y("value", title=metric_name)
     )
 
 
@@ -291,7 +292,7 @@ def plot_paired(
                     y="val",
                     ax=ax,
                     legend=False,
-                    ci=None,
+                    errorbar=None,
                 )
             sns.boxplot(
                 x=groupby,

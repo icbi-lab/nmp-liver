@@ -7,6 +7,7 @@ include { SCQC } from "./modules/local/scqc/main"
 include { JUPYTERNOTEBOOK as JUPYTER_SCVI } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_CELL_TYPES } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_DE_ANALYSIS } from "./modules/local/jupyternotebook/main"
+include { JUPYTERNOTEBOOK as JUPYTER_OVERVIEW_PLOTS } from "./modules/local/jupyternotebook/main"
 include { DE_DESEQ2 as DESEQ_T0_T1 } from "./modules/local/scde.nf"
 include { DE_DESEQ2 as DESEQ_LT } from "./modules/local/scde.nf"
 include { DE_DESEQ2 as DESEQ_ECD } from "./modules/local/scde.nf"
@@ -88,6 +89,21 @@ workflow {
         ["Yes", "No"],
         "ECD",
         ""
+    )
+
+    ch_overview_plots = ch_adata_cell_types.concat(
+        Channel.fromPath("${projectDir}/tables/cell_type_markers.csv")
+    ).collect()
+    JUPYTER_OVERVIEW_PLOTS(
+        Channel.value([
+            [id: "90_overview_plots"],
+            file("${projectDir}/analyses/90_overview_plots.py", checkIfExists: true)
+        ]),
+        ch_overview_plots.map{ adata, markers -> [
+            "adata_path": adata.name,
+            "marker_genes_path": markers.name
+        ]},
+        ch_overview_plots
     )
 
 }

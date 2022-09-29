@@ -108,7 +108,7 @@ class COLORS:
         "T cell CD8": "#006d2c",
         "T cell CD8 NK-like": "#98df8a",
         "cDC": "#aec7e8",
-        "monocytic lineage": "#ff7f0e",
+        "Monocytes/Macrophages": "#ff7f0e",
         "pDC": "#c49c94",
     }
     cell_type_coarse = {
@@ -123,7 +123,7 @@ class COLORS:
         "Progenitor": "#333333",
         "T cell": "#279e68",
         "cDC": "#aec7e8",
-        "monocytic lineage": "#ff7f0e",
+        "Monocytes/Macrophages": "#ff7f0e",
         "pDC": "#c49c94",
     }
     LT = {

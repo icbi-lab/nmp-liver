@@ -260,7 +260,7 @@ sc.pl.dotplot(
 
 # %%
 sc.pl.dotplot(
-    adata_t0t1[adata_t0t1.obs["cell_type"] == "monocytic lineage"],
+    adata_t0t1[adata_t0t1.obs["cell_type"] == "Monocytes/Macrophages"],
     var_names=gene_set_il["gene_symbol"],
     groupby="timepoint",
     cmap="coolwarm",
@@ -310,10 +310,10 @@ sh.compare_groups.pl.plot_lm_result_altair(
 )
 
 # %% [markdown]
-# ### Check individual pathway 
+# ### Check individual pathway
 #  * using PPARG as an example
-#  * check if the results make sense 
-#  * check if the direction of the score makes sense (red = up) 
+#  * check if the results make sense
+#  * check if the direction of the score makes sense (red = up)
 
 # %%
 dc.plot_volcano(logfc_mat, p_mat, "Neutrophils", name="PPARG", net=tfnet, top=5)
@@ -405,7 +405,7 @@ cpdba.plot_result(
 
 # %%
 cpdb_res_m = cpdba.significant_interactions(
-    de_res["monocytic lineage"], max_pvalue=0.1, pvalue_col="pvalue"
+    de_res["Monocytes/Macrophages"], max_pvalue=0.1, pvalue_col="pvalue"
 )
 
 # %%
@@ -414,7 +414,7 @@ cpdba.plot_result(
     group_col="comparison",
     aggregate=False,
     cluster="heatmap",
-    title="CellChat analysis: monocytic lineage T0 vs T1",
+    title="CellChat analysis: Monocytes/Macrophages T0 vs T1",
 )
 
 # %% [markdown]
@@ -470,7 +470,7 @@ sh.pairwise.plot_paired(
 sc.pl.umap(adata, color="CXCL8", cmap="inferno")
 
 # %% [markdown]
-# ## monocytic lineage
+# ## Monocytes/Macrophages
 
 # %%
 sc.pl.umap(adata_m, color=["patient_id", "timepoint", "cell_type"])
@@ -501,7 +501,9 @@ sc.pl.dotplot(
 
 # %%
 genes = ["LYZ", "FCN1", "VCAN", "HLA-DRA", "CD163", "MARCO", "HMOX1", "VSIG4"]
-pvalues = de_res["monocytic lineage"].set_index("gene_id").loc[genes, "padj"].tolist()
+pvalues = (
+    de_res["Monocytes/Macrophages"].set_index("gene_id").loc[genes, "padj"].tolist()
+)
 sh.pairwise.plot_paired(
     pb_m[pb_m.obs["timepoint"].isin(["T0", "T1"]), :],
     groupby="timepoint",

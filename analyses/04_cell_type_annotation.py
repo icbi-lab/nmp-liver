@@ -125,7 +125,7 @@ ah.annotate_cell_types(
     {
         "cDC": [6],
         "pDC": [7],
-        "monocytic lineage": [0, 1, 2, 3, 4],
+        "Monocytes/Macrophages": [0, 1, 2, 3, 4],
         "potentially empty droplets": [5],
     },
 )
@@ -190,7 +190,9 @@ sc.pl.umap(adata, color="cell_type")
 # ## Coarse cell-type annotation
 
 # %%
-adata.obs["cell_type_coarse"] = ["T cell" if "T cell" in x else x for x in adata.obs["cell_type"]]
+adata.obs["cell_type_coarse"] = [
+    "T cell" if "T cell" in x else x for x in adata.obs["cell_type"]
+]
 
 # %%
 sc.pl.umap(adata, color="cell_type_coarse")

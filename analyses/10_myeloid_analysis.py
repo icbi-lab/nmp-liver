@@ -30,7 +30,8 @@ sc.settings.set_figure_params(figsize=(4, 4), frameon=False)
 
 # %%
 adata_path = nxfvars.get(
-    "adata_path", "../data/results/04_cell_type_annotation/artifacts/adata_cell_types.h5ad"
+    "adata_path",
+    "../data/results/04_cell_type_annotation/artifacts/adata_cell_types.h5ad",
 )
 artifact_dir = nxfvars.get("artifact_dir", "/home/sturm/Downloads/nmp-temp/")
 
@@ -44,7 +45,9 @@ sc.pl.umap(adata, color="cell_type")
 # ## Cluster overview
 
 # %%
-adata_m = adata[adata.obs["cell_type"].str.startswith("monocytic lineage"), :].copy()
+adata_m = adata[
+    adata.obs["cell_type"].str.startswith("Monocytes/Macrophages"), :
+].copy()
 
 # %%
 sc.pp.neighbors(adata_m, use_rep="X_scVI", n_neighbors=30)
@@ -135,9 +138,7 @@ for ct in tqdm(pb_m.obs["cell_type"].unique()):
 # %%
 markers = {
     ct: pb_m.var.loc[
-        lambda x: (x[f"{ct}_auroc"] >= 0.7)
-        & (x[f"{ct}_fc"] > 2)
-        & (x[f"{ct}_sfc"] > 0)
+        lambda x: (x[f"{ct}_auroc"] >= 0.7) & (x[f"{ct}_fc"] > 2) & (x[f"{ct}_sfc"] > 0)
     ]
     .sort_values(f"{ct}_auroc", ascending=False)
     .index.tolist()
@@ -160,16 +161,21 @@ for cluster, m in markers.items():
     sc.pl.umap(adata_m, color=m[:10], ncols=5, cmap="inferno", size=10)
 
 # %%
-sc.pl.umap(adata_m, color=["S100A8", "LYZ", "S100A9", "MARCO", "CD5L", "VSIG4", "VCAN", "FCN1", "CD14"], ncols=3, cmap="inferno")
+sc.pl.umap(
+    adata_m,
+    color=["S100A8", "LYZ", "S100A9", "MARCO", "CD5L", "VSIG4", "VCAN", "FCN1", "CD14"],
+    ncols=3,
+    cmap="inferno",
+)
 
 # %% [markdown]
 # ## Save results
 
 # %%
-with open(f"{artifact_dir}/markers_myeloid.csv", 'w') as f:
+with open(f"{artifact_dir}/markers_myeloid.csv", "w") as f:
     for ct, genes in markers.items():
         for g in genes:
-            f.write(f"{ct},{g}\n")        
+            f.write(f"{ct},{g}\n")
 
 # %%
 adata_m.write_h5ad(f"{artifact_dir}/adata_m.h5ad")

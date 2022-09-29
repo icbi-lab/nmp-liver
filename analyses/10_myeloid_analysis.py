@@ -46,7 +46,7 @@ sc.pl.umap(adata, color="cell_type")
 
 # %%
 adata_m = adata[
-    adata.obs["cell_type"].str.startswith("Monocytes/Macrophages"), :
+    adata.obs["cell_type"].str.startswith("Monocytes_Macrophages"), :
 ].copy()
 
 # %%

@@ -125,7 +125,7 @@ ah.annotate_cell_types(
     {
         "cDC": [6],
         "pDC": [7],
-        "Monocytes/Macrophages": [0, 1, 2, 3, 4],
+        "Monocytes_Macrophages": [0, 1, 2, 3, 4],
         "potentially empty droplets": [5],
     },
 )

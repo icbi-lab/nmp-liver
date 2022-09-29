@@ -4,6 +4,7 @@ import os
 import statsmodels.stats.multitest
 import numpy as np
 from anndata import AnnData
+from matplotlib.patches import PathPatch
 import scipy.sparse
 
 
@@ -65,3 +66,39 @@ def scale_range(a):
 def scale_01(a):
     """Scale between 0 and 1"""
     return (a - np.min(a)) / np.ptp(a)
+
+
+def adjust_box_widths(g, fac):
+    """
+    Adjust the withs of a seaborn-generated boxplot.
+
+    from https://stackoverflow.com/questions/56838187/how-to-create-spacing-between-same-subgroup-in-seaborn-boxplot
+    """
+
+    # iterating through Axes instances
+    for ax in g.axes:
+
+        # iterating through axes artists:
+        for c in ax.get_children():
+
+            # searching for PathPatches
+            if isinstance(c, PathPatch):
+                # getting current width of box:
+                p = c.get_path()
+                verts = p.vertices
+                verts_sub = verts[:-1]
+                xmin = np.min(verts_sub[:, 0])
+                xmax = np.max(verts_sub[:, 0])
+                xmid = 0.5 * (xmin + xmax)
+                xhalf = 0.5 * (xmax - xmin)
+
+                # setting new width of box
+                xmin_new = xmid - fac * xhalf
+                xmax_new = xmid + fac * xhalf
+                verts_sub[verts_sub[:, 0] == xmin, 0] = xmin_new
+                verts_sub[verts_sub[:, 0] == xmax, 0] = xmax_new
+
+                # setting new width of median line
+                for l in ax.lines:
+                    if np.all(l.get_xdata() == [xmin, xmax]):
+                        l.set_xdata([xmin_new, xmax_new])

@@ -108,7 +108,7 @@ class COLORS:
         "T cell CD8": "#006d2c",
         "T cell CD8 NK-like": "#98df8a",
         "cDC": "#aec7e8",
-        "Monocytes/Macrophages": "#ff7f0e",
+        "Monocytes_Macrophages": "#ff7f0e",
         "pDC": "#c49c94",
     }
     cell_type_coarse = {
@@ -123,14 +123,14 @@ class COLORS:
         "Progenitor": "#333333",
         "T cell": "#279e68",
         "cDC": "#aec7e8",
-        "Monocytes/Macrophages": "#ff7f0e",
+        "Monocytes_Macrophages": "#ff7f0e",
         "pDC": "#c49c94",
     }
     LT = {
-        "yes": "#ff7f00",
-        "no": "#4daf4a",
+        "Yes": "#ff7f00",
+        "No": "#4daf4a",
     }
     ECD = {
-        "yes": "#d95f02",
-        "no": "#7570b3",
+        "Yes": "#d95f02",
+        "No": "#7570b3",
     }

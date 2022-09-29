@@ -30,6 +30,7 @@ from tqdm import tqdm
 import decoupler as dc
 import itertools
 from pathlib import Path
+from itertools import zip_longest
 import numpy as np
 import seaborn as sns
 
@@ -56,7 +57,86 @@ adata_t0t1 = adata[adata.obs["timepoint"].isin(["T0", "T1"]), :]
 
 # %%
 pb = sh.pseudobulk.pseudobulk(
-    adata_t0t1, groupby=["patient_id", "timepoint", "cell_type"], log_norm=True
+    adata_t0t1,
+    groupby=["patient_id", "timepoint", "cell_type", "LT", "ECD"],
+    log_norm=True,
 )
+
+# %% [markdown]
+# ## Comparison by quality and timepoints
+
+# %%
+df_neutro = (
+    pb[:, gene_set_il["gene_symbol"]]
+    .to_df()
+    .join(pb.obs)
+    .loc[lambda x: x["cell_type"] == "Neutrophils"]
+)
+
+# %%
+df_m = (
+    pb[:, gene_set_il["gene_symbol"]]
+    .to_df()
+    .join(pb.obs)
+    .loc[lambda x: x["cell_type"] == "monocytic lineage"]
+)
+
+
+# %%
+def make_paired_plot(tmp_df, hue):
+    var_names = gene_set_il["gene_symbol"]
+    fig, axes = plt.subplots(3, 10, figsize=(20, 10), squeeze=False)
+    axes = axes.flatten()
+    max_val = np.max(tmp_df.loc[:, var_names].values)
+    for i, (var, ax) in enumerate(zip_longest(var_names, axes)):
+        if var is not None:
+            sns.stripplot(
+                x="timepoint",
+                data=tmp_df,
+                y=var,
+                ax=ax,
+                hue=hue,
+                size=5,
+                linewidth=1,
+                palette=getattr(sh.colors.COLORS, hue),
+                dodge=True,
+            )
+            sns.boxplot(
+                tmp_df, x="timepoint", hue=hue, y=var, ax=ax, color="white", fliersize=0
+            )
+            sns.lineplot(
+                tmp_df,
+                x="timepoint",
+                hue=hue,
+                y=var,
+                errorbar=None,
+                legend=False,
+                palette=getattr(sh.colors.COLORS, hue),
+                linewidth=3,
+                ax=ax,
+            )
+            ax.legend().set_visible(False)
+            ax.set_ylim(-0.5, max_val)
+            ax.set_title(var)
+
+        else:
+            ax.set_visible(False)
+
+    fig.tight_layout()
+    sh.util.adjust_box_widths(fig, 0.8)
+    # return fig
+
+
+# %%
+make_paired_plot(df_neutro, "LT")
+
+# %%
+make_paired_plot(df_neutro, "ECD")
+
+# %%
+make_paired_plot(df_m, "LT")
+
+# %%
+make_paired_plot(df_m, "ECD")
 
 # %%

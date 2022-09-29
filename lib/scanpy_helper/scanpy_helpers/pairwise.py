@@ -158,6 +158,7 @@ def plot_paired(
     pvalue_template=lambda x: f"unadj. p={x:.2f}, t-test",
     adjust_fdr=False,
     boxplot_properties=None,
+    palette=None,
 ):
     """
     Pairwise expression plot.
@@ -283,6 +284,7 @@ def plot_paired(
                 hue=hue,
                 size=size,
                 linewidth=1,
+                palette=palette,
             )
             if paired_by is not None:
                 sns.lineplot(
@@ -293,6 +295,7 @@ def plot_paired(
                     ax=ax,
                     legend=False,
                     errorbar=None,
+                    palette=palette,
                 )
             sns.boxplot(
                 x=groupby,

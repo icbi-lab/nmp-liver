@@ -57,6 +57,27 @@ workflow {
         it -> it.name.contains("adata_cell_types")
     }
 
+    JUPYTER_MYELOID(
+        Channel.value([
+            [id: "10_myeloid_analysis"],
+            file("${projectDir}/analyses/10_myeloid_analysis.py", checkIfExists: true)
+        ]),
+        ch_adata_cell_types.map{ adata -> [
+            "adata_path": adata.name
+        ]},
+        ch_adata_cell_types
+    )
+    JUPYTER_NEUTRO(
+        Channel.value([
+            [id: "11_neutro_analysis"],
+            file("${projectDir}/analyses/11_neutro_analysis.py", checkIfExists: true)
+        ]),
+        ch_adata_cell_types.map{ adata -> [
+            "adata_path": adata.name
+        ]},
+        ch_adata_cell_types
+    )
+
     JUPYTER_DE_ANALYSIS(
         Channel.value([
             [id: "20_de_analysis"],

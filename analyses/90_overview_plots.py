@@ -23,6 +23,7 @@
 import scanpy as sc
 import scanpy_helpers as sh
 import pandas as pd
+import numpy as np
 from nxfvars import nxfvars
 import matplotlib.pyplot as plt
 import altair as alt
@@ -55,6 +56,19 @@ ah = sh.annotation.AnnotationHelper(markers=cell_type_markers.sort_values("cell_
 
 # %%
 adata = sc.read_h5ad(adata_path)
+
+# %%
+pb_cell_type_coarse = dc.get_pseudobulk(
+    adata,
+    sample_col="patient_id",
+    groups_col="cell_type_coarse",
+    min_prop=0.05,
+    min_cells=10,
+    min_counts=1000,
+    min_smpls=3,
+)
+sc.pp.normalize_total(pb_cell_type_coarse, target_sum=1e6)
+sc.pp.log1p(pb_cell_type_coarse)
 
 # %% [markdown]
 # ## UMAP plots
@@ -91,6 +105,7 @@ for gene in [
     "CD79A",
     "JCHAIN",
     "ALB",
+    "KRT18",
 ]:
     with plt.rc_context({"figure.figsize": (3, 3), "figure.dpi": 600}):
         fig = sc.pl.umap(adata, color=gene, return_fig=True)
@@ -138,21 +153,81 @@ with plt.rc_context({"figure.figsize": (6, 6), "figure.dpi": 1200}):
     fig.savefig(f"{artifact_dir}/umap_total_counts.pdf", bbox_inches="tight")
 
 # %%
-mean_counts = adata.obs.groupby(["patient_id", "cell_type_coarse"]).agg(
-    total_counts=pd.NamedAgg("total_counts", "mean")
-).reset_index()
+mean_counts = (
+    adata.obs.groupby(["patient_id", "cell_type_coarse"])
+    .agg(total_counts=pd.NamedAgg("total_counts", "mean"))
+    .reset_index()
+)
 
 # %%
-order = mean_counts.groupby("cell_type_coarse").agg("median").sort_values("total_counts").index.tolist()
+order = (
+    mean_counts.groupby("cell_type_coarse")
+    .agg("median")
+    .sort_values("total_counts")
+    .index.tolist()
+)
 
 # %%
-ch = alt.Chart(mean_counts).mark_boxplot().encode(
-    x=alt.X("cell_type_coarse", sort=order),
-    y=alt.Y("total_counts"),
-    color=alt.Color(
-        "cell_type_coarse", scale=sh.colors.altair_scale("cell_type_coarse")
-    ),
+ch = (
+    alt.Chart(mean_counts)
+    .mark_boxplot()
+    .encode(
+        x=alt.X("cell_type_coarse", sort=order),
+        y=alt.Y("total_counts"),
+        color=alt.Color(
+            "cell_type_coarse", scale=sh.colors.altair_scale("cell_type_coarse")
+        ),
+    )
 )
 ch.save(f"{artifact_dir}/transcript_counts_per_cell_type.svg")
+
+# %% [markdown]
+# ## Gene expression across cell-types
+
+# %%
+tmp_df = pb_cell_type_coarse.obs
+tmp_df["CXCR2"] = np.array(pb_cell_type_coarse[:, "CXCR2"].X[:, 0])
+
+# %%
+order = (
+    tmp_df.groupby("cell_type_coarse")
+    .agg("median")
+    .sort_values("CXCR2", ascending=False)
+    .index.values
+)
+
+# %%
+PROPS = {
+    "boxprops": {"facecolor": "none", "edgecolor": "darkgrey"},
+    "medianprops": {"color": "darkgrey"},
+    "whiskerprops": {"color": "darkgrey"},
+    "capprops": {"color": "darkgrey"},
+}
+
+fig, ax = plt.subplots(1, 1, figsize=(7, 4))
+sns.stripplot(
+    x="cell_type_coarse",
+    y="CXCR2",
+    hue="patient_id",
+    data=tmp_df,
+    ax=ax,
+    order=order,
+    palette=sh.colors.COLORS.patient_id,
+    size=7,
+    linewidth=1
+)
+sns.boxplot(
+    x="cell_type_coarse",
+    y="CXCR2",
+    ax=ax,
+    data=tmp_df,
+    order=order,
+    color="white",
+    **PROPS,
+    showfliers=False,
+)
+ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+_ = plt.xticks(rotation=90)
+# fig.savefig(f"{artifact_dir}/vegfa_fractions.pdf", bbox_inches="tight")
 
 # %%

@@ -32,7 +32,6 @@ sc.settings.set_figure_params(figsize=(4, 4), frameon=False)
 adata_path = nxfvars.get(
     "adata_path", "../data/results/04_cell_type_annotation/artifacts/adata_cell_types.h5ad"
 )
-scvi_model = nxfvars.get("scvi_model", "/home/sturm/Downloads/nmp-temp/scvi_model/")
 artifact_dir = nxfvars.get("artifact_dir", "/home/sturm/Downloads/nmp-temp/")
 
 # %%
@@ -164,6 +163,9 @@ for cluster, m in markers.items():
     if len(m):
         sc.pl.umap(adata_n, color=m[:10], ncols=5, cmap="inferno", size=10)
 
+# %% [markdown]
+# ## Save results
+
 # %%
 with open(f"{artifact_dir}/markers_neutro.csv", 'w') as f:
     for ct, genes in markers.items():
@@ -171,3 +173,4 @@ with open(f"{artifact_dir}/markers_neutro.csv", 'w') as f:
             f.write(f"{ct},{g}\n")        
 
 # %%
+adata_n.write_h5ad(f"{artifact_dir}/adata_n.h5ad")

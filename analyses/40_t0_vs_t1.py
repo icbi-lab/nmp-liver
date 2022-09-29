@@ -42,7 +42,12 @@ adata_path = nxfvars.get(
     "adata_path",
     "../data/results/04_cell_type_annotation/artifacts/adata_cell_types.h5ad",
 )
-adata_neutro_path = nxfvars.get("adata_neutro_path", "../data/results/
+adata_neutro_path = nxfvars.get(
+    "adata_neutro_path", "../data/results/11_neutro_analysis/artifacts/adata_n.h5ad"
+)
+adata_myeloid_path = nxfvars.get(
+    "adata_myeloid_path", "../data/results/10_myeloid_analysis//artifacts/adata_m.h5ad"
+)
 artifact_dir = nxfvars.get("artifact_dir", "/home/sturm/Downloads/nmp-temp/")
 de_res_dir = nxfvars.get("de_res_dir", "../data/results/21_deseq/DESEQ_T0_T1/")
 dorothea_net = nxfvars.get("dorothea", "../tables/dorothea_human_AB_2022-09-28.csv")
@@ -64,6 +69,10 @@ cellchatdb = pd.read_csv(cellchatdb_path, sep="\t", comment="#")
 adata_t0t1 = adata[adata.obs["timepoint"].isin(["T0", "T1"]), :]
 
 # %%
+adata_n = sc.read_h5ad(adata_neutro_path)
+adata_m = sc.read_h5ad(adata_myeloid_path)
+
+# %%
 de_res = {}
 for f in Path(de_res_dir).glob("**/*.tsv"):
     ct = f.name.replace("_DESeq2_result.tsv", "").split("_")[-1]
@@ -81,6 +90,32 @@ pb = dc.get_pseudobulk(
 )
 sc.pp.normalize_total(pb, target_sum=1e6)
 sc.pp.log1p(pb)
+
+# %%
+pb_n = dc.get_pseudobulk(
+    adata_n,
+    sample_col="patient_id",
+    groups_col="timepoint",
+    min_prop=0.05,
+    min_cells=10,
+    min_counts=1000,
+    min_smpls=2,
+)
+sc.pp.normalize_total(pb_n, target_sum=1e6)
+sc.pp.log1p(pb_n)
+
+# %%
+pb_m = dc.get_pseudobulk(
+    adata_m,
+    sample_col="patient_id",
+    groups_col="timepoint",
+    min_prop=0.05,
+    min_cells=10,
+    min_counts=1000,
+    min_smpls=2,
+)
+sc.pp.normalize_total(pb_m, target_sum=1e6)
+sc.pp.log1p(pb_m)
 
 # %%
 sc.pl.umap(adata, color="cell_type")
@@ -260,6 +295,103 @@ cpdba.plot_result(
     aggregate=False,
     cluster="heatmap",
     title="CellChat analysis: monocytic lineage T0 vs T1",
+)
+
+# %% [markdown]
+# ## Neutrophils
+
+# %%
+sc.pl.dotplot(
+    adata,
+    groupby="cell_type_coarse",
+    var_names=[
+        "IFITM2",
+        "CSF3R",
+        "H3F3A",
+        "S100A11",
+        "FPR1",
+        "FCGR3B",
+        "NAMPT",
+        "VNN2",
+        "BASP1",
+        "G0S2",
+        "MXD1",
+        "LITAF",
+        "CXCR2",
+        "S100A9",
+        "SOD2",
+        "SRGN",
+    ],
+    cmap="coolwarm",
+)
+
+# %%
+sc.pl.umap(adata_n, color=["patient_id", "timepoint", "cell_type"])
+
+# %%
+sc.pl.umap(adata_n, color=["CXCR2", "CXCR1", "CXCR4"], cmap="inferno", size=15)
+
+# %%
+genes = ["CXCR2", "CXCR1", "CXCL8", "CXCR4"]
+pvalues = de_res["Neutrophils"].set_index("gene_id").loc[genes, "padj"].tolist()
+sh.pairwise.plot_paired(
+    pb_n[pb_n.obs["timepoint"].isin(["T0", "T1"]), :],
+    groupby="timepoint",
+    paired_by="patient_id",
+    var_names=genes,
+    pvalues=pvalues,
+    pvalue_template=lambda x: f"FDR={x:.4f}, DESeq2"
+    if x >= 0.0001
+    else "FDR<0.0001, DESeq2",
+    palette=sh.colors.COLORS.patient_id,
+)
+
+# %%
+sc.pl.umap(adata, color="CXCL8", cmap="inferno")
+
+# %% [markdown]
+# ## monocytic lineage
+
+# %%
+sc.pl.umap(adata_m, color=["patient_id", "timepoint", "cell_type"])
+
+# %%
+sc.pl.dotplot(
+    adata,
+    groupby="cell_type_coarse",
+    var_names=[
+        "CST3",
+        "CSTB",
+        "MS4A7",
+        "MARCH1",
+        "HMOX1",
+        "CD68",
+        "MAFB",
+        "CD163",
+        "VCAN",
+        "CSF1R",
+        "CD300E",
+        "LIPA",
+        "SAMHD1",
+        "PSAP",
+        "TGFBI",
+    ],
+    cmap="coolwarm",
+)
+
+# %%
+genes = ["LYZ", "FCN1", "VCAN", "HLA-DRA", "CD163", "MARCO", "HMOX1", "VSIG4"]
+pvalues = de_res["monocytic lineage"].set_index("gene_id").loc[genes, "padj"].tolist()
+sh.pairwise.plot_paired(
+    pb_m[pb_m.obs["timepoint"].isin(["T0", "T1"]), :],
+    groupby="timepoint",
+    paired_by="patient_id",
+    var_names=genes,
+    pvalues=pvalues,
+    pvalue_template=lambda x: f"FDR={x:.4f}, DESeq2"
+    if x >= 0.0001
+    else "FDR<0.0001, DESeq2",
+    palette=sh.colors.COLORS.patient_id,
 )
 
 # %%

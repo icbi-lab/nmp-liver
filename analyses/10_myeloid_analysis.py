@@ -162,8 +162,14 @@ for cluster, m in markers.items():
 # %%
 sc.pl.umap(adata_m, color=["S100A8", "LYZ", "S100A9", "MARCO", "CD5L", "VSIG4", "VCAN", "FCN1", "CD14"], ncols=3, cmap="inferno")
 
+# %% [markdown]
+# ## Save results
+
 # %%
 with open(f"{artifact_dir}/markers_myeloid.csv", 'w') as f:
     for ct, genes in markers.items():
         for g in genes:
             f.write(f"{ct},{g}\n")        
+
+# %%
+adata_m.write_h5ad(f"{artifact_dir}/adata_m.h5ad")

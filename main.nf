@@ -6,6 +6,8 @@ include { check_samplesheet } from './modules/local/check_samplesheet'
 include { SCQC } from "./modules/local/scqc/main"
 include { JUPYTERNOTEBOOK as JUPYTER_SCVI } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_CELL_TYPES } from "./modules/local/jupyternotebook/main"
+include { JUPYTERNOTEBOOK as JUPYTER_MYELOID } from "./modules/local/jupyternotebook/main"
+include { JUPYTERNOTEBOOK as JUPYTER_NEUTRO } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_DE_ANALYSIS } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_OVERVIEW_PLOTS } from "./modules/local/jupyternotebook/main"
 include { DE_DESEQ2 as DESEQ_T0_T1 } from "./modules/local/scde.nf"

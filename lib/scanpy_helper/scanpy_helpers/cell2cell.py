@@ -49,7 +49,7 @@ class CpdbAnalysis:
             aggr_fun=lambda x, axis: np.sum(x > 0, axis) / x.shape[axis],  # type: ignore
         )
         fractions_expressed = pseudobulk(
-            pb_fracs, groupby=self.cell_type_column, aggr_fun=np.mean
+            pb_fracs, groupby=self.cell_type_column, aggr_fun=np.mean, min_obs=0
         )
         fractions_expressed.obs.set_index(self.cell_type_column, inplace=True)
 
@@ -60,7 +60,7 @@ class CpdbAnalysis:
         sc.pp.normalize_total(pb, target_sum=1e6)
         sc.pp.log1p(pb)
         pb_mean_cell_type = pseudobulk(
-            pb, groupby=self.cell_type_column, aggr_fun=np.mean
+            pb, groupby=self.cell_type_column, aggr_fun=np.mean, min_obs=0
         )
         pb_mean_cell_type.obs.set_index(self.cell_type_column, inplace=True)
 
@@ -257,6 +257,7 @@ class CpdbAnalysis:
             color=fc_col,
             p_col=pvalue_col,
             x="interaction",
+            y=group_col,
             configure=lambda x: x,
             title="",
             order=order,

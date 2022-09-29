@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 import altair as alt
 from tqdm import tqdm
 import decoupler as dc
+import itertools
 from pathlib import Path
 import numpy as np
 import seaborn as sns
@@ -53,6 +54,9 @@ de_res_dir = nxfvars.get("de_res_dir", "../data/results/21_deseq/DESEQ_T0_T1/")
 dorothea_net = nxfvars.get("dorothea", "../tables/dorothea_human_AB_2022-09-28.csv")
 cellchatdb_path = nxfvars.get("cellchatdb", "../tables/cellchatdb_2022-09-29.tsv")
 msigdb_path = nxfvars.get("msigdb", "../tables/gene_sets_hallmarks_msigdb.csv")
+gene_set_il_path = nxfvars.get(
+    "gene_set_il_path", "../tables/gene_sets_interleukins_chemokines.xlsx"
+)
 
 # %% [markdown]
 # ## Load data
@@ -70,6 +74,9 @@ cellchatdb = pd.read_csv(cellchatdb_path, sep="\t", comment="#")
 msigdb = pd.read_csv(msigdb_path, comment="#").drop_duplicates()
 
 # %%
+gene_set_il = pd.read_excel(gene_set_il_path)
+
+# %%
 adata_t0t1 = adata[adata.obs["timepoint"].isin(["T0", "T1"]), :]
 
 # %%
@@ -81,6 +88,43 @@ de_res = {}
 for f in Path(de_res_dir).glob("**/*.tsv"):
     ct = f.name.replace("_DESeq2_result.tsv", "").split("_")[-1]
     de_res[ct] = pd.read_csv(f, sep="\t")
+
+# %%
+de_res_all = pd.concat([df.assign(cell_type=ct) for ct, df in de_res.items()])
+
+# %%
+logfc_mat = (
+    pd.concat(
+        [
+            r.loc[:, ["gene_id", "log2FoldChange"]]
+            .rename(columns={"log2FoldChange": ct})
+            .set_index("gene_id")
+            for ct, r in de_res.items()
+        ],
+        axis=1,
+        sort=True,
+    )
+    .fillna(0)
+    .T
+)
+logfc_mat.name = "deseq2_estimate"
+
+# %%
+p_mat = (
+    pd.concat(
+        [
+            r.loc[:, ["gene_id", "padj"]]
+            .rename(columns={"padj": ct})
+            .set_index("gene_id")
+            for ct, r in de_res.items()
+        ],
+        axis=1,
+        sort=True,
+    )
+    .fillna(1)
+    .T
+)
+p_mat.name = "deseq2_pvals"
 
 # %%
 pb = dc.get_pseudobulk(
@@ -134,7 +178,7 @@ sc.pl.umap(adata_t0t1, color="cell_type")
 sh.colors.set_scale_anndata(adata_t0t1, "timepoint")
 
 # %%
-sc.pl.umap(adata_t0t1, color="timepoint", add_outline=True, size=15)
+sc.pl.umap(adata_t0t1, color="timepoint", size=15)
 
 # %% [markdown]
 # ### cell-type fractions
@@ -173,44 +217,64 @@ sh.pairwise.plot_paired(
 )
 
 # %% [markdown]
+# ### Highlighted genes
+
+# %%
+# Fill genes with logFC=0, FDR=1 if they are not contained for a certain cell-type
+tmp_de_res = (
+    de_res_all.merge(
+        pd.DataFrame.from_records(
+            itertools.product(
+                de_res_all["gene_id"].unique(), de_res_all["cell_type"].unique()
+            ),
+            columns=["gene_id", "cell_type"],
+        ),
+        how="right",
+        on=["gene_id", "cell_type"],
+    )
+    .assign(
+        log2FoldChange=lambda x: x["log2FoldChange"].fillna(0),
+        padj=lambda x: x["padj"].fillna(1),
+    )
+    .loc[lambda x: x["gene_id"].isin(gene_set_il["gene_symbol"])]
+)
+
+# %%
+sh.compare_groups.pl.plot_lm_result_altair(
+    tmp_de_res,
+    x="gene_id",
+    y="cell_type",
+    p_col="padj",
+    color="log2FoldChange",
+)
+
+# %%
+sc.pl.dotplot(
+    adata_t0t1[adata_t0t1.obs["cell_type"] == "Neutrophils"],
+    var_names=gene_set_il["gene_symbol"],
+    groupby="timepoint",
+    cmap="coolwarm",
+    swap_axes=True,
+    title="Neutrophils",
+)
+
+# %%
+sc.pl.dotplot(
+    adata_t0t1[adata_t0t1.obs["cell_type"] == "monocytic lineage"],
+    var_names=gene_set_il["gene_symbol"],
+    groupby="timepoint",
+    cmap="coolwarm",
+    swap_axes=True,
+    title="Macro/Mono",
+)
+
+# %% [markdown]
 # ## Transcription factors (Dorothea)
 
 # %%
 # TFs model was obtained with this function from omnipathdb.
 # For reproducibility, the result was stored in the `tables` directory and is used for all analyses.
 # tfnet = dc.get_dorothea(organism="human", levels=["A", "B"])
-
-# %%
-logfc_mat = (
-    pd.concat(
-        [
-            r.loc[:, ["gene_id", "log2FoldChange"]]
-            .rename(columns={"log2FoldChange": ct})
-            .set_index("gene_id")
-            for ct, r in de_res.items()
-        ],
-        axis=1,
-        sort=True,
-    )
-    .fillna(0)
-    .T
-)
-
-# %%
-p_mat = (
-    pd.concat(
-        [
-            r.loc[:, ["gene_id", "padj"]]
-            .rename(columns={"padj": ct})
-            .set_index("gene_id")
-            for ct, r in de_res.items()
-        ],
-        axis=1,
-        sort=True,
-    )
-    .fillna(1)
-    .T
-)
 
 # %%
 tf_acts, tf_pvals = dc.dense_run(dc.run_mlm, mat=logfc_mat, net=tfnet, verbose=True)
@@ -282,9 +346,6 @@ sh.pairwise.plot_paired(
 msigdb
 
 # %%
-de_res_all = pd.concat([df.assign(cell_type=ct) for ct, df in de_res.items()])
-
-# %%
 ora_pvals = dc.get_ora_df(
     de_res_all.loc[lambda x: (x["padj"] < 0.01) & (np.abs(x["log2FoldChange"] > 1))],
     msigdb,
@@ -314,7 +375,7 @@ sh.compare_groups.pl.plot_lm_result_altair(
     cmap="viridis",
     domain=lambda x: [0, x],
     reverse=False,
-    value_max=10
+    value_max=10,
 )
 
 # %% [markdown]

@@ -7,9 +7,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.13.1
 #   kernelspec:
-#     display_name: Python [conda env:conda-2022-schneeberger-liver-scanpy]
-#     language: python
-#     name: conda-env-conda-2022-schneeberger-liver-scanpy-py
+#     display_name: 'SSH apollo-15 apollo-15: 2022-schneeberger-liver'
+#     language: ''
+#     name: rik_ssh_apollo_15_apollo152022schneebergerliver
 # ---
 
 # %%
@@ -24,6 +24,12 @@ from nxfvars import nxfvars
 import matplotlib.pyplot as plt
 import altair as alt
 from tqdm import tqdm
+
+# %%
+from threadpoolctl import threadpool_info
+
+# %%
+threadpool_info()
 
 # %%
 sc.settings.set_figure_params(figsize=(4, 4), frameon=False)

@@ -80,9 +80,9 @@ def plot_all_palettes():
 
 class COLORS:
     timepoint = {
-        "T0": "#edf8b1",
-        "T1": "#7fcdbb",
-        "T2": "#2c7fb8",
+        "T0": "#1b9e77",
+        "T1": "#d95f02",
+        "T2": "#7570b3",
     }
     patient_id = {
         "P1": "#000000",
@@ -95,34 +95,42 @@ class COLORS:
         "P8": "#CC79A7",
     }
     cell_type = {
-        "B cells": "#1f77b4",
-        "Cholangiocytes": "#ff7f0e",
-        "Endothelial cells": "#279e68",
-        "Hepatocytes": "#aa40fc",
-        "Mast cells": "#8c564b",
-        "NK cell": "#e377c2",
-        "Neutrophils": "#b5bd61",
-        "Plasma cells": "#17becf",
-        "Progenitor": "#aec7e8",
-        "T cell CD4": "#ffbb78",
-        "T cell CD8": "#98df8a",
-        "T cell CD8 NK-like": "#ff9896",
-        "cDC": "#c5b0d5",
-        "monocytic lineage": "#c49c94",
-        "pDC": "#f7b6d2",
+        "B cells": "#b5bd61",
+        "Cholangiocytes": "#f7b6d2",
+        "Endothelial cells": "#8c564b",
+        "Hepatocytes": "#17becf",
+        "Mast cells": "#ffbb78",
+        "NK cell": "#aa40fc",
+        "Neutrophils": "#1f77b4",
+        "Plasma cells": "#e377c2",
+        "Progenitor": "#333333",
+        "T cell CD4": "#279e68",
+        "T cell CD8": "#006d2c",
+        "T cell CD8 NK-like": "#98df8a",
+        "cDC": "#aec7e8",
+        "monocytic lineage": "#ff7f0e",
+        "pDC": "#c49c94",
     }
     cell_type_coarse = {
-        "B cells": "#1f77b4",
-        "Cholangiocytes": "#ff7f0e",
-        "Endothelial cells": "#279e68",
-        "Hepatocytes": "#d62728",
-        "Mast cells": "#aa40fc",
-        "NK cell": "#8c564b",
-        "Neutrophils": "#e377c2",
-        "Plasma cells": "#b5bd61",
-        "Progenitor": "#17becf",
-        "T cell": "#aec7e8",
-        "cDC": "#ffbb78",
-        "monocytic lineage": "#98df8a",
-        "pDC": "#ff9896",
+        "B cells": "#b5bd61",
+        "Cholangiocytes": "#f7b6d2",
+        "Endothelial cells": "#8c564b",
+        "Hepatocytes": "#17becf",
+        "Mast cells": "#ffbb78",
+        "NK cell": "#aa40fc",
+        "Neutrophils": "#1f77b4",
+        "Plasma cells": "#e377c2",
+        "Progenitor": "#333333",
+        "T cell": "#279e68",
+        "cDC": "#aec7e8",
+        "monocytic lineage": "#ff7f0e",
+        "pDC": "#c49c94",
+    }
+    LT = {
+        "yes": "#ff7f00",
+        "no": "#4daf4a",
+    }
+    ECD = {
+        "yes": "#d95f02",
+        "no": "#7570b3",
     }

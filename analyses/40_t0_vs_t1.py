@@ -52,6 +52,7 @@ artifact_dir = nxfvars.get("artifact_dir", "/home/sturm/Downloads/nmp-temp/")
 de_res_dir = nxfvars.get("de_res_dir", "../data/results/21_deseq/DESEQ_T0_T1/")
 dorothea_net = nxfvars.get("dorothea", "../tables/dorothea_human_AB_2022-09-28.csv")
 cellchatdb_path = nxfvars.get("cellchatdb", "../tables/cellchatdb_2022-09-29.tsv")
+msigdb_path = nxfvars.get("msigdb", "../tables/gene_sets_hallmarks_msigdb.csv")
 
 # %% [markdown]
 # ## Load data
@@ -64,6 +65,9 @@ tfnet = pd.read_csv(dorothea_net)
 
 # %%
 cellchatdb = pd.read_csv(cellchatdb_path, sep="\t", comment="#")
+
+# %%
+msigdb = pd.read_csv(msigdb_path, comment="#").drop_duplicates()
 
 # %%
 adata_t0t1 = adata[adata.obs["timepoint"].isin(["T0", "T1"]), :]
@@ -256,6 +260,61 @@ sh.pairwise.plot_paired(
     "timepoint",
     var_names=["ACSL5", "CDKN1A", "CD83", "NR1D1", "PLIN2"],
     paired_by="patient_id",
+)
+
+# %% [markdown]
+# ## GSEA
+
+# %%
+# # MSigDB was obtained as follows. The results were stored in `tables` for reproducibility reasons
+# msigdb = dc.get_resource('MSigDB')
+# genesets = pd.read_csv("../tables/gene_sets_hallmarks.csv", header=None)[0].tolist()
+# for gs in genesets:
+#     assert np.sum(msigdb["geneset"] == gs), gs
+# msigdb_subset = msigdb.loc[lambda x: (x["collection"] == "hallmark") & (x["geneset"].isin(genesets)), :]
+# msigdb_subset.to_csv("../tables/gene_sets_hallmarks_msigdb.csv", index=False)
+
+# %%
+
+# %%
+
+# %%
+msigdb
+
+# %%
+de_res_all = pd.concat([df.assign(cell_type=ct) for ct, df in de_res.items()])
+
+# %%
+ora_pvals = dc.get_ora_df(
+    de_res_all.loc[lambda x: (x["padj"] < 0.01) & (np.abs(x["log2FoldChange"] > 1))],
+    msigdb,
+    groupby="cell_type",
+    features="gene_id",
+    source="geneset",
+    target="genesymbol",
+)
+ora_score = -np.log10(ora_pvals)
+ora_score.name = "ora_estimate"
+
+# %%
+ora_res = format_decoupler_results(
+    ora_score, ora_pvals, name="ORA", contrast="cell_type"
+)
+
+# %%
+ora_res
+
+# %%
+sh.compare_groups.pl.plot_lm_result_altair(
+    ora_res.rename(columns={"act_score": "-log10(p)"}),
+    y="cell_type",
+    color="-log10(p)",
+    x="ORA",
+    title="TFs scores by cell-type",
+    cmap="viridis",
+    domain=lambda x: [0, x],
+    reverse=False,
+    value_max=10
 )
 
 # %% [markdown]

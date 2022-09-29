@@ -76,7 +76,7 @@ def plot_lm_result_altair(
         + alt.Chart(df_subset.loc[lambda x: ~x["FDR"].isnull()])
         .mark_point(color="white", filled=True, stroke="black", strokeWidth=0)
         .encode(
-            x=alt.X(x, sort=order),
+            x=alt.X(x, sort=order, axis=alt.Axis(labelLimit=1000)),
             y=y,
             size=alt.Size(
                 "FDR:N",

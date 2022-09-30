@@ -23,7 +23,7 @@ from threadpoolctl import threadpool_limits
 import os
 
 cpus = nxfvars.get("cpus", 2)
-os.environ["NUMBA_NUM_THREADS"] = str(cpus)  
+os.environ["NUMBA_NUM_THREADS"] = str(cpus)
 threadpool_limits(cpus)
 
 # %%
@@ -39,7 +39,8 @@ sc.settings.set_figure_params(figsize=(4, 4), frameon=False)
 
 # %%
 adata_path = nxfvars.get(
-    "adata_path", "../data/results/04_cell_type_annotation/artifacts/adata_cell_types.h5ad"
+    "adata_path",
+    "../data/results/04_cell_type_annotation/artifacts/adata_cell_types.h5ad",
 )
 artifact_dir = nxfvars.get("artifact_dir", "/home/sturm/Downloads/nmp-temp/")
 
@@ -76,11 +77,19 @@ sc.pp.normalize_total(pb_n, target_sum=1e6)
 sc.pp.log1p(pb_n, base=2)
 
 # %%
-with plt.rc_context({"figure.figsize": (6, 6)}):
-    sc.pl.umap(adata_n, color="cell_type", legend_loc="on data", legend_fontoutline=2)
-
-# %%
-sc.pl.umap(adata_n, color=["patient_id", "timepoint"])
+for col in ["cell_type", "patient_id", "timepoint"]:
+    sh.colors.set_scale_anndata(
+        adata_n, col, "neutro_clusters" if col == "cell_type" else None
+    )
+    legend_params = (
+        dict(legend_loc="on data", legend_fontoutline=2) if col == "cell_type" else {}
+    )
+    with plt.rc_context({"figure.figsize": (6, 6), "figure.dpi": 1200}):
+        fig = sc.pl.umap(adata_n, color=col, return_fig=True, size=20, **legend_params)
+        fig.savefig(
+            f"{artifact_dir}/umap_neutrophil_cluster_overview_{col}.pdf",
+            bbox_inches="tight",
+        )
 
 # %%
 tmp_df = (
@@ -107,7 +116,9 @@ txt = (
         ),
     )
 )
-(heatmp + txt).properties(width=200)
+ch = (heatmp + txt).properties(width=200)
+ch.save(f"{artifact_dir}/neutrophil_cluster_count_per_patient.svg")
+ch.display()
 
 # %%
 tmp_df = (
@@ -120,14 +131,25 @@ tmp_df = (
 )
 
 # %%
-alt.Chart(tmp_df).encode(
-    color="cell_type", y="timepoint", x=alt.X("n_cells", stack="normalize")
-).mark_bar()
+ch = (
+    alt.Chart(tmp_df)
+    .encode(
+        color=alt.Color("cell_type", scale=sh.colors.altair_scale("neutro_clusters")),
+        y="timepoint",
+        x=alt.X("n_cells", stack="normalize"),
+    )
+    .mark_bar()
+)
+ch.save(f"{artifact_dir}/timepoints_by_neutro_clusters.svg")
+ch.display()
 
 # %%
-alt.Chart(tmp_df).encode(
-    color="timepoint", y=alt.Y("n_cells", stack="normalize"), x="cell_type"
+ch = alt.Chart(tmp_df).encode(
+        color=alt.Color("timepoint", scale=sh.colors.altair_scale("timepoint")),
+    y=alt.Y("n_cells", stack="normalize"),
+    x="cell_type",
 ).mark_bar()
+ch.save(f"{artifact_dir}/neutro_clusters_per_timepoint.svg")
 
 # %% [markdown]
 # ## Characterization of clusters
@@ -147,9 +169,7 @@ for ct in tqdm(pb_n.obs["cell_type"].unique()):
 # %%
 markers = {
     ct: pb_n.var.loc[
-        lambda x: (x[f"{ct}_auroc"] >= 0.7)
-        & (x[f"{ct}_fc"] > 1)
-        & (x[f"{ct}_sfc"] > 0)
+        lambda x: (x[f"{ct}_auroc"] >= 0.7) & (x[f"{ct}_fc"] > 1) & (x[f"{ct}_sfc"] > 0)
     ]
     .sort_values(f"{ct}_auroc", ascending=False)
     .index.tolist()
@@ -176,10 +196,10 @@ for cluster, m in markers.items():
 # ## Save results
 
 # %%
-with open(f"{artifact_dir}/markers_neutro.csv", 'w') as f:
+with open(f"{artifact_dir}/markers_neutro.csv", "w") as f:
     for ct, genes in markers.items():
         for g in genes:
-            f.write(f"{ct},{g}\n")        
+            f.write(f"{ct},{g}\n")
 
 # %%
 adata_n.write_h5ad(f"{artifact_dir}/adata_n.h5ad")

@@ -77,7 +77,7 @@ sc.pp.log1p(pb_cell_type_coarse)
 for col in ["cell_type", "cell_type_coarse"]:
     with plt.rc_context({"figure.figsize": (6, 6), "figure.dpi": 1200}):
         sh.colors.set_scale_anndata(adata, col)
-        fig = sc.pl.umap(adata, color=col, return_fig=True, size=15)
+        fig = sc.pl.umap(adata, color=col, return_fig=True, size=10)
         fig.savefig(f"{artifact_dir}/umap_{col}.pdf", bbox_inches="tight")
 
 # %% [markdown]

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
@@ -76,11 +77,19 @@ sc.pp.normalize_total(pb_m, target_sum=1e6)
 sc.pp.log1p(pb_m, base=2)
 
 # %%
-with plt.rc_context({"figure.figsize": (6, 6)}):
-    sc.pl.umap(adata_m, color="cell_type", legend_loc="on data", legend_fontoutline=2)
-
-# %%
-sc.pl.umap(adata_m, color=["patient_id", "timepoint"])
+for col in ["cell_type", "patient_id", "timepoint"]:
+    sh.colors.set_scale_anndata(
+        adata_m, col, "mono_clusters" if col == "cell_type" else None
+    )
+    legend_params = (
+        dict(legend_loc="on data", legend_fontoutline=2) if col == "cell_type" else {}
+    )
+    with plt.rc_context({"figure.figsize": (6, 6), "figure.dpi": 1200}):
+        fig = sc.pl.umap(adata_m, color=col, return_fig=True, size=20, **legend_params)
+        fig.savefig(
+            f"{artifact_dir}/umap_myeloid_cluster_overview_{col}.pdf",
+            bbox_inches="tight",
+        )
 
 # %%
 tmp_df = (
@@ -107,7 +116,9 @@ txt = (
         ),
     )
 )
-(heatmp + txt).properties(width=300)
+ch = (heatmp + txt).properties(width=250)
+ch.save(f"{artifact_dir}/myeloid_cluster_count_per_patient.svg")
+ch.display()
 
 # %%
 tmp_df = (
@@ -120,14 +131,30 @@ tmp_df = (
 )
 
 # %%
-alt.Chart(tmp_df).encode(
-    color="cell_type", y="timepoint", x=alt.X("n_cells", stack="normalize")
-).mark_bar()
+ch = (
+    alt.Chart(tmp_df)
+    .encode(
+        color=alt.Color("cell_type", scale=sh.colors.altair_scale("mono_clusters")),
+        y="timepoint",
+        x=alt.X("n_cells", stack="normalize"),
+    )
+    .mark_bar()
+)
+ch.save(f"{artifact_dir}/timepoints_by_myeloid_cluster.svg")
+ch.display()
 
 # %%
-alt.Chart(tmp_df).encode(
-    color="timepoint", y=alt.Y("n_cells", stack="normalize"), x="cell_type"
-).mark_bar()
+ch = (
+    alt.Chart(tmp_df)
+    .encode(
+        color=alt.Color("timepoint", scale=sh.colors.altair_scale("timepoint")),
+        y=alt.Y("n_cells", stack="normalize"),
+        x="cell_type",
+    )
+    .mark_bar()
+)
+ch.save(f"{artifact_dir}/myeloid_clusters_per_timepoint.svg")
+ch.display()
 
 # %% [markdown]
 # ## Characterization of clusters

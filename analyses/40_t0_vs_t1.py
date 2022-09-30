@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
@@ -189,13 +190,11 @@ sc.pl.umap(adata, color="cell_type")
 # ## Overview
 
 # %%
-sc.pl.umap(adata_t0t1, color="cell_type")
-
-# %%
-sh.colors.set_scale_anndata(adata_t0t1, "timepoint")
-
-# %%
-sc.pl.umap(adata_t0t1, color="timepoint")
+with plt.rc_context({"figure.figsize": (6, 6), "figure.dpi": 1200}):
+    for col in ["cell_type", "cell_type_coarse", "timepoint"]:
+        sh.colors.set_scale_anndata(adata_t0t1, col)
+        fig = sc.pl.umap(adata_t0t1, color=col, return_fig=True, size=10)
+        fig.savefig(f"{artifact_dir}/umap_only_t0t1_{col}.pdf", bbox_inches="tight")
 
 # %% [markdown]
 # ### cell-type fractions
@@ -213,7 +212,13 @@ cell_type_fractions = (
 tmp_df = (
     cell_type_fractions.groupby(["timepoint", "cell_type"]).agg("mean").reset_index()
 )
-alt.Chart(tmp_df).encode(x="timepoint", y="frac", color="cell_type").mark_bar()
+ch = alt.Chart(tmp_df).encode(
+    x="timepoint",
+    y="frac",
+    color=alt.Color("cell_type", scale=sh.colors.altair_scale("cell_type")),
+).mark_bar()
+ch.save(f"{artifact_dir}/cell_type_fractions_patient_average_stacked_bar_chart.svg")
+ch.display()
 
 # %%
 ad_ct = sc.AnnData(

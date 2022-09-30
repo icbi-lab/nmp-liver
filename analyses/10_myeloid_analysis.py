@@ -17,10 +17,19 @@
 # %autoreload 2
 
 # %%
+# ensure reproducibility -> set numba multithreaded mode
+from nxfvars import nxfvars
+from threadpoolctl import threadpool_limits
+import os
+
+cpus = nxfvars.get("cpus", 2)
+os.environ["NUMBA_NUM_THREADS"] = str(cpus)  
+threadpool_limits(cpus)
+
+# %%
 import scanpy as sc
 import scanpy_helpers as sh
 import pandas as pd
-from nxfvars import nxfvars
 import matplotlib.pyplot as plt
 import altair as alt
 from tqdm import tqdm

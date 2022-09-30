@@ -45,6 +45,7 @@ adata_path = nxfvars.get(
 gene_set_il_path = nxfvars.get(
     "gene_set_il_path", "../tables/gene_sets_interleukins_chemokines.xlsx"
 )
+de_res_dir = nxfvars.get("de_res_dir", "../data/results/21_deseq/DESEQ_LT/")
 
 # %%
 adata = sc.read_h5ad(adata_path)
@@ -62,6 +63,60 @@ pb = sh.pseudobulk.pseudobulk(
     log_norm=True,
 )
 
+# %%
+pb.obs.drop(columns=["cell_type", "n_obs"]).drop_duplicates()
+
+# %%
+de_res = {"T0": {}, "T1": {}}
+for f in Path(de_res_dir).glob("**/*.tsv"):
+    _, timepoint, ct = f.name.replace("_DESeq2_result.tsv", "").split("_", maxsplit=2)
+    de_res[timepoint][ct] = pd.read_csv(f, sep="\t")
+
+
+# %%
+def _get_dfs(de_res):
+    for timepoint, de_res_timepoint in de_res.items():
+        for ct, df in de_res_timepoint.items():
+            yield df.assign(cell_type=ct, timepoint=timepoint)
+            
+de_res_all = pd.concat(_get_dfs(de_res))
+
+# %% [markdown]
+# ## All cell-types by quality (for each timepoint)
+
+# %%
+gene_set_il["gene_symbol"]
+
+# %%
+# Fill genes with logFC=0, FDR=1 if they are not contained for a certain cell-type
+tmp_de_res = (
+    de_res_all.merge(
+        pd.DataFrame.from_records(
+            itertools.product(
+                gene_set_il["gene_symbol"].unique(), de_res_all["cell_type"].unique(), de_res_all["timepoint"].unique()
+            ),
+            columns=["gene_id", "cell_type", "timepoint"],
+        ),
+        how="right",
+    ).fillna({"padj": 1, "log2FoldChange": 0, "pvalue": 1})
+    .loc[lambda x: x["gene_id"].isin(gene_set_il["gene_symbol"])]
+)
+
+# %%
+tmp_de_res.loc[lambda x: x["timepoint"] == "T0"].loc[lambda x: x["gene_id"] == "IL6"]
+
+# %%
+for timepoint in ["T0", "T1"]:
+    sh.compare_groups.pl.plot_lm_result_altair(
+        tmp_de_res.loc[lambda x: x["timepoint"] == timepoint],
+        x="gene_id",
+        y="cell_type",
+        p_col="padj",
+        color="log2FoldChange",
+        title=f"LT ({timepoint})",
+        p_cutoff=np.inf,
+    ).display()
+
 # %% [markdown]
 # ## Comparison by quality and timepoints
 
@@ -78,8 +133,11 @@ df_m = (
     pb[:, gene_set_il["gene_symbol"]]
     .to_df()
     .join(pb.obs)
-    .loc[lambda x: x["cell_type"] == "monocytic lineage"]
+    .loc[lambda x: x["cell_type"] == "Monocytes_Macrophages"]
 )
+
+# %%
+sc.pl.dotplot(adata, groupby="cell_type", var_names=["IL6", "ALB"])
 
 
 # %%
@@ -87,7 +145,7 @@ def make_paired_plot(tmp_df, hue):
     var_names = gene_set_il["gene_symbol"]
     fig, axes = plt.subplots(3, 10, figsize=(20, 10), squeeze=False)
     axes = axes.flatten()
-    max_val = np.max(tmp_df.loc[:, var_names].values)
+    max_val = np.nanmax(tmp_df.loc[:, var_names].values)
     for i, (var, ax) in enumerate(zip_longest(var_names, axes)):
         if var is not None:
             sns.stripplot(

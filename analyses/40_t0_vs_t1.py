@@ -246,6 +246,7 @@ sh.compare_groups.pl.plot_lm_result_altair(
     y="cell_type",
     p_col="padj",
     color="log2FoldChange",
+    p_cutoff=np.inf
 )
 
 # %%

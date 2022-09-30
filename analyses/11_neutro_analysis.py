@@ -7,9 +7,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.13.1
 #   kernelspec:
-#     display_name: 'SSH apollo-15 apollo-15: 2022-schneeberger-liver'
-#     language: ''
-#     name: rik_ssh_apollo_15_apollo152022schneebergerliver
+#     display_name: Python [conda env:conda-2022-schneeberger-liver-scanpy]
+#     language: python
+#     name: conda-env-conda-2022-schneeberger-liver-scanpy-py
 # ---
 
 # %%
@@ -17,19 +17,22 @@
 # %autoreload 2
 
 # %%
+# ensure reproducibility -> set numba multithreaded mode
+from nxfvars import nxfvars
+from threadpoolctl import threadpool_limits
+import os
+
+cpus = nxfvars.get("cpus", 2)
+os.environ["NUMBA_NUM_THREADS"] = str(cpus)  
+threadpool_limits(cpus)
+
+# %%
 import scanpy as sc
 import scanpy_helpers as sh
 import pandas as pd
-from nxfvars import nxfvars
 import matplotlib.pyplot as plt
 import altair as alt
 from tqdm import tqdm
-
-# %%
-from threadpoolctl import threadpool_info
-
-# %%
-threadpool_info()
 
 # %%
 sc.settings.set_figure_params(figsize=(4, 4), frameon=False)

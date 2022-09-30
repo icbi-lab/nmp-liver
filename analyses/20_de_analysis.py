@@ -78,7 +78,7 @@ for ct, tmp_ad in tqdm(sh.util.split_anndata(adata[adata.obs["timepoint"].isin([
         tmp_ad,
         sample_col="patient_id",
         groups_col="timepoint",
-        min_prop=0.01,
+        min_prop=0.05,
         min_cells=10,
         min_counts=1000,
         min_smpls=3

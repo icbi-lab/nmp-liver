@@ -1,5 +1,6 @@
 import altair as alt
 import pandas as pd
+from natsort import natsorted
 
 
 def set_scale_anndata(adata, column, palette=None):
@@ -94,43 +95,64 @@ class COLORS:
         "P7": "#D55E00",
         "P8": "#CC79A7",
     }
-    cell_type = {
-        "B cells": "#b5bd61",
-        "Cholangiocytes": "#f7b6d2",
-        "Endothelial cells": "#8c564b",
-        "Hepatocytes": "#17becf",
-        "Mast cells": "#ffbb78",
-        "NK cells": "#aa40fc",
-        "Neutrophils": "#1f77b4",
-        "Plasma cells": "#e377c2",
-        "Progenitor cells": "#333333",
-        "T cells CD4": "#279e68",
-        "T cells CD8": "#006d2c",
-        "NKT cells": "#98df8a",
-        "cDCs": "#aec7e8",
-        "Monocytes_Macrophages": "#ff7f0e",
-        "pDCs": "#c49c94",
+    cell_type = dict(
+        natsorted(
+            {
+                "B cells": "#b5bd61",
+                "Cholangiocytes": "#f7b6d2",
+                "Endothelial cells": "#8c564b",
+                "Hepatocytes": "#17becf",
+                "Mast cells": "#ffbb78",
+                "NK cells": "#aa40fc",
+                "Neutrophils": "#1f77b4",
+                "Plasma cells": "#e377c2",
+                "Progenitor cells": "#555555",
+                "T cells CD4": "#279e68",
+                "T cells CD8": "#006d2c",
+                "NKT cells": "#98df8a",
+                "cDCs": "#aec7e8",
+                "Monocytes ⁄ Macrophages": "#ff7f0e",
+                "pDCs": "#c49c94",
+            }.items()
+        )
+    )
+    cell_type_coarse = dict(
+        natsorted(
+            {
+                "B cells": "#b5bd61",
+                "Cholangiocytes": "#f7b6d2",
+                "Endothelial cells": "#8c564b",
+                "Hepatocytes": "#17becf",
+                "Mast cells": "#ffbb78",
+                "NK cells": "#aa40fc",
+                "Neutrophils": "#1f77b4",
+                "Plasma cells": "#e377c2",
+                "Progenitor cells": "#555555",
+                "T cells": "#279e68",
+                "cDCs": "#aec7e8",
+                "Monocytes ⁄ Macrophages": "#ff7f0e",
+                "pDCs": "#c49c94",
+            }.items()
+        )
+    )
+    mono_clusters = {
+        "M0": "#4C78A8",
+        "M1": "#F58518",
+        "M2": "#E45756",
+        "M3": "#72B7B2",
+        "M4": "#54A24B",
     }
-    cell_type_coarse = {
-        "B cells": "#b5bd61",
-        "Cholangiocytes": "#f7b6d2",
-        "Endothelial cells": "#8c564b",
-        "Hepatocytes": "#17becf",
-        "Mast cells": "#ffbb78",
-        "NK cells": "#aa40fc",
-        "Neutrophils": "#1f77b4",
-        "Plasma cells": "#e377c2",
-        "Progenitor cells": "#333333",
-        "T cells": "#279e68",
-        "cDCs": "#aec7e8",
-        "Monocytes_Macrophages": "#ff7f0e",
-        "pDCs": "#c49c94",
+    neutro_clusters = {
+        "N0": "#4C78A8",
+        "N1": "#F58518",
+        "N2": "#E45756",
+        "N3": "#72B7B2",
     }
     LT = {
-        "Yes": "#ff7f00",
         "No": "#4daf4a",
+        "Yes": "#ff7f00",
     }
     ECD = {
-        "Yes": "#d95f02",
         "No": "#7570b3",
+        "Yes": "#d95f02",
     }

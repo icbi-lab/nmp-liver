@@ -263,7 +263,7 @@ sh.compare_groups.pl.plot_lm_result_altair(
     y="cell_type",
     p_col="padj",
     color="log2FoldChange",
-    p_cutoff=np.inf
+    p_cutoff=np.inf,
 )
 
 # %%
@@ -278,7 +278,7 @@ sc.pl.dotplot(
 
 # %%
 sc.pl.dotplot(
-    adata_t0t1[adata_t0t1.obs["cell_type"] == "Monocytes_Macrophages"],
+    adata_t0t1[adata_t0t1.obs["cell_type"] == "Monocytes ⁄ Macrophages"],
     var_names=gene_set_il["gene_symbol"],
     groupby="timepoint",
     cmap="coolwarm",
@@ -328,10 +328,10 @@ sh.compare_groups.pl.plot_lm_result_altair(
 )
 
 # %% [markdown]
-# ### Check individual pathway 
+# ### Check individual pathway
 #  * using PPARG as an example
-#  * check if the results make sense 
-#  * check if the direction of the score makes sense (red = up) 
+#  * check if the results make sense
+#  * check if the direction of the score makes sense (red = up)
 
 # %%
 dc.plot_volcano(logfc_mat, p_mat, "Neutrophils", name="PPARG", net=tfnet, top=5)
@@ -385,7 +385,8 @@ ora_res = ora_res.merge(
     pd.DataFrame.from_records(
         itertools.product(de_res_all["cell_type"].unique(), ora_res["ORA"].unique()),
         columns=["cell_type", "ORA"],
-    ), how="outer"
+    ),
+    how="outer",
 ).fillna({"act_score": 0, "pvalue": 1, "fdr": 1})
 
 # %%
@@ -399,17 +400,21 @@ sh.compare_groups.pl.plot_lm_result_altair(
     domain=lambda x: [0, x],
     reverse=False,
     value_max=10,
-    p_cutoff=np.inf
+    p_cutoff=np.inf,
 )
 
 # %% [markdown]
 # ### GSEA
 
 # %%
-_, gsea_scores, gsea_pvals = dc.run_gsea(stat_mat, msigdb, source="geneset", target="genesymbol")
+_, gsea_scores, gsea_pvals = dc.run_gsea(
+    stat_mat, msigdb, source="geneset", target="genesymbol"
+)
 
 # %%
-gsea_res = format_decoupler_results(gsea_scores, gsea_pvals, name="GSEA", contrast="cell_type")
+gsea_res = format_decoupler_results(
+    gsea_scores, gsea_pvals, name="GSEA", contrast="cell_type"
+)
 
 # %%
 gsea_res
@@ -422,7 +427,7 @@ sh.compare_groups.pl.plot_lm_result_altair(
     x="GSEA",
     title="GSEA scores by cell-type",
     p_cutoff=np.inf,
-    cluster=True
+    cluster=True,
 )
 
 # %% [markdown]
@@ -452,7 +457,7 @@ cpdba.plot_result(
 
 # %%
 cpdb_res_m = cpdba.significant_interactions(
-    de_res["Monocytes_Macrophages"], max_pvalue=0.1, pvalue_col="pvalue"
+    de_res["Monocytes ⁄ Macrophages"], max_pvalue=0.1, pvalue_col="pvalue"
 )
 
 # %%
@@ -548,7 +553,9 @@ sc.pl.dotplot(
 
 # %%
 genes = ["LYZ", "FCN1", "VCAN", "HLA-DRA", "CD163", "MARCO", "HMOX1", "VSIG4"]
-pvalues = de_res["Monocytes_Macrophages"].set_index("gene_id").loc[genes, "padj"].tolist()
+pvalues = (
+    de_res["Monocytes ⁄ Macrophages"].set_index("gene_id").loc[genes, "padj"].tolist()
+)
 sh.pairwise.plot_paired(
     pb_m[pb_m.obs["timepoint"].isin(["T0", "T1"]), :],
     groupby="timepoint",

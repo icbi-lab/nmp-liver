@@ -23,7 +23,7 @@ from threadpoolctl import threadpool_limits
 import os
 
 cpus = nxfvars.get("cpus", 2)
-os.environ["NUMBA_NUM_THREADS"] = str(cpus)  
+os.environ["NUMBA_NUM_THREADS"] = str(cpus)
 threadpool_limits(cpus)
 
 # %%
@@ -55,7 +55,7 @@ sc.pl.umap(adata, color="cell_type")
 
 # %%
 adata_m = adata[
-    adata.obs["cell_type"].str.startswith("Monocytes_Macrophages"), :
+    adata.obs["cell_type"].str.startswith("Monocytes ⁄ Macrophages"), :
 ].copy()
 
 # %%

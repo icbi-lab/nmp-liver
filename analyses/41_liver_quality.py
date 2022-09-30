@@ -78,7 +78,8 @@ def _get_dfs(de_res):
     for timepoint, de_res_timepoint in de_res.items():
         for ct, df in de_res_timepoint.items():
             yield df.assign(cell_type=ct, timepoint=timepoint)
-            
+
+
 de_res_all = pd.concat(_get_dfs(de_res))
 
 # %% [markdown]
@@ -93,12 +94,15 @@ tmp_de_res = (
     de_res_all.merge(
         pd.DataFrame.from_records(
             itertools.product(
-                gene_set_il["gene_symbol"].unique(), de_res_all["cell_type"].unique(), de_res_all["timepoint"].unique()
+                gene_set_il["gene_symbol"].unique(),
+                de_res_all["cell_type"].unique(),
+                de_res_all["timepoint"].unique(),
             ),
             columns=["gene_id", "cell_type", "timepoint"],
         ),
         how="right",
-    ).fillna({"padj": 1, "log2FoldChange": 0, "pvalue": 1})
+    )
+    .fillna({"padj": 1, "log2FoldChange": 0, "pvalue": 1})
     .loc[lambda x: x["gene_id"].isin(gene_set_il["gene_symbol"])]
 )
 
@@ -133,7 +137,7 @@ df_m = (
     pb[:, gene_set_il["gene_symbol"]]
     .to_df()
     .join(pb.obs)
-    .loc[lambda x: x["cell_type"] == "Monocytes_Macrophages"]
+    .loc[lambda x: x["cell_type"] == "Monocytes ⁄ Macrophages"]
 )
 
 # %%

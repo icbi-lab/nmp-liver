@@ -26,7 +26,7 @@ from threadpoolctl import threadpool_limits
 import os
 
 cpus = nxfvars.get("cpus", 2)
-os.environ["NUMBA_NUM_THREADS"] = str(cpus)  
+os.environ["NUMBA_NUM_THREADS"] = str(cpus)
 threadpool_limits(cpus)
 
 # %%
@@ -97,11 +97,11 @@ ah.annotate_cell_types(
         "Endothelial cells": [15],
         "Hepatocytes": [18],
         "Plasma cells": [24],
-        "Progenitor": [21, 17],
+        "Progenitor cells": [21, 17],
         "Mast cells": [27],
         "Neutrophils": [6, 2, 1, 10, 13, 11, 7, 12, 14],
         "myeloid": [22, 23, 0, 3],
-        "NKT": [4, 19, 8, 9, 5, 16, 28],
+        "NKT cells": [4, 19, 8, 9, 5, 16, 28],
         "Erythrocytes": [25],
     },
 )
@@ -132,8 +132,8 @@ with plt.rc_context({"figure.figsize": (6, 6)}):
 ah.annotate_cell_types(
     adata_m,
     {
-        "cDC": [6],
-        "pDC": [7],
+        "cDCs": [6],
+        "pDCs": [7],
         "Monocytes_Macrophages": [0, 1, 2, 3, 4],
         "potentially empty droplets": [5],
     },
@@ -146,7 +146,7 @@ ah.integrate_back(adata, adata_m)
 # ## NK/T compartment
 
 # %%
-adata_t = adata[adata.obs["cell_type"] == "NKT", :].copy()
+adata_t = adata[adata.obs["cell_type"] == "NKT cells", :].copy()
 
 # %%
 ah.reprocess_adata_subset_scvi(adata_t, leiden_res=0.5)
@@ -170,10 +170,10 @@ ah.annotate_cell_types(
     {
         # 7 is NK dividing, but we do not annotate this for this dataset
         # 0 and 1/6 are different subtypes of NK cells. We don't annotate this either for now.
-        "NK cell": [7, 0, 1, 6],
-        "T cell CD4": [3],
-        "T cell CD8 NK-like": [5],
-        "T cell CD8": [2, 4, 8],
+        "NK cells": [7, 0, 1, 6],
+        "T cells CD4": [3],
+        "NKT cells": [5],
+        "T cells CD8": [2, 4, 8],
         "potentially empty droplets": [9],
     },
 )
@@ -200,7 +200,7 @@ sc.pl.umap(adata, color="cell_type")
 
 # %%
 adata.obs["cell_type_coarse"] = [
-    "T cell" if "T cell" in x else x for x in adata.obs["cell_type"]
+    "T cells" if "T cells" in x else x for x in adata.obs["cell_type"]
 ]
 
 # %%

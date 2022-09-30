@@ -86,7 +86,7 @@ adata_m = sc.read_h5ad(adata_myeloid_path)
 # %%
 de_res = {}
 for f in Path(de_res_dir).glob("**/*.tsv"):
-    ct = f.name.replace("_DESeq2_result.tsv", "").split("_")[-1]
+    ct = f.name.replace("_DESeq2_result.tsv", "").split("_", maxsplit=3)[-1]
     de_res[ct] = pd.read_csv(f, sep="\t")
 
 # %%
@@ -125,6 +125,23 @@ p_mat = (
     .T
 )
 p_mat.name = "deseq2_pvals"
+
+# %%
+stat_mat = (
+    pd.concat(
+        [
+            r.loc[:, ["gene_id", "stat"]]
+            .rename(columns={"stat": ct})
+            .set_index("gene_id")
+            for ct, r in de_res.items()
+        ],
+        axis=1,
+        sort=True,
+    )
+    .fillna(0)
+    .T
+)
+p_mat.name = "deseq2_stat"
 
 # %%
 pb = dc.get_pseudobulk(
@@ -178,7 +195,7 @@ sc.pl.umap(adata_t0t1, color="cell_type")
 sh.colors.set_scale_anndata(adata_t0t1, "timepoint")
 
 # %%
-sc.pl.umap(adata_t0t1, color="timepoint", size=15)
+sc.pl.umap(adata_t0t1, color="timepoint")
 
 # %% [markdown]
 # ### cell-type fractions
@@ -261,7 +278,7 @@ sc.pl.dotplot(
 
 # %%
 sc.pl.dotplot(
-    adata_t0t1[adata_t0t1.obs["cell_type"] == "monocytic lineage"],
+    adata_t0t1[adata_t0t1.obs["cell_type"] == "Monocytes_Macrophages"],
     var_names=gene_set_il["gene_symbol"],
     groupby="timepoint",
     cmap="coolwarm",
@@ -340,11 +357,10 @@ sh.pairwise.plot_paired(
 # msigdb_subset.to_csv("../tables/gene_sets_hallmarks_msigdb.csv", index=False)
 
 # %%
-
-# %%
-
-# %%
 msigdb
+
+# %% [markdown]
+# ### ORA
 
 # %%
 ora_pvals = dc.get_ora_df(
@@ -378,11 +394,35 @@ sh.compare_groups.pl.plot_lm_result_altair(
     y="cell_type",
     color="-log10(p)",
     x="ORA",
-    title="TFs scores by cell-type",
+    title="ORA scores by cell-type",
     cmap="viridis",
     domain=lambda x: [0, x],
     reverse=False,
     value_max=10,
+    p_cutoff=np.inf
+)
+
+# %% [markdown]
+# ### GSEA
+
+# %%
+_, gsea_scores, gsea_pvals = dc.run_gsea(stat_mat, msigdb, source="geneset", target="genesymbol")
+
+# %%
+gsea_res = format_decoupler_results(gsea_scores, gsea_pvals, name="GSEA", contrast="cell_type")
+
+# %%
+gsea_res
+
+# %%
+sh.compare_groups.pl.plot_lm_result_altair(
+    gsea_res.rename(columns={"act_score": "-log10(p)"}),
+    y="cell_type",
+    color="-log10(p)",
+    x="GSEA",
+    title="GSEA scores by cell-type",
+    p_cutoff=np.inf,
+    cluster=True
 )
 
 # %% [markdown]
@@ -412,7 +452,7 @@ cpdba.plot_result(
 
 # %%
 cpdb_res_m = cpdba.significant_interactions(
-    de_res["monocytic lineage"], max_pvalue=0.1, pvalue_col="pvalue"
+    de_res["Monocytes_Macrophages"], max_pvalue=0.1, pvalue_col="pvalue"
 )
 
 # %%
@@ -508,7 +548,7 @@ sc.pl.dotplot(
 
 # %%
 genes = ["LYZ", "FCN1", "VCAN", "HLA-DRA", "CD163", "MARCO", "HMOX1", "VSIG4"]
-pvalues = de_res["monocytic lineage"].set_index("gene_id").loc[genes, "padj"].tolist()
+pvalues = de_res["Monocytes_Macrophages"].set_index("gene_id").loc[genes, "padj"].tolist()
 sh.pairwise.plot_paired(
     pb_m[pb_m.obs["timepoint"].isin(["T0", "T1"]), :],
     groupby="timepoint",

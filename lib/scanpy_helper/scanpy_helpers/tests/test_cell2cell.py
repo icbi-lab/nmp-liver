@@ -66,6 +66,33 @@ def test_find_expressed_genes(cpdba):
     ]
 
 
-# @pytest.mark.parametrize("de_genes,expected_interactions", [[], []])
-# def test_find_significant_interactions(cpdba, de_genes):
-#     pass
+@pytest.mark.parametrize(
+    "de_genes,params,expected_interactions",
+    [
+        (
+            ["PDGFB"],
+            {},
+            [("T CD8", "PDGFB", "PDGFRB"), ("receptor_cells", "PDGFB", "PDGFRB")],
+        ),
+    ],
+)
+def test_find_significant_interactions(cpdba, de_genes, params, expected_interactions):
+    # Don't care about pvalue here for now
+    de_res = pd.DataFrame().assign(gene_symbol=de_genes, log_fc=1, p_value=0.0001)
+    interactions = cpdba.significant_interactions(
+        de_res,
+        pvalue_col="p_value",
+        fc_col="log_fc",
+        gene_symbol_col="gene_symbol",
+        **params
+    )
+    assert (
+        sorted(
+            interactions.loc[
+                :, ["cell_type_col", "source_genesymbol", "target_genesymbol"]
+            ]
+            .to_records(index=False)
+            .tolist()
+        )
+        == expected_interactions
+    )

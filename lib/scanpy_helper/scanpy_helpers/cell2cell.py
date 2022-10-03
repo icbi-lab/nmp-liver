@@ -14,7 +14,13 @@ from .util import fdr_correction
 
 class CpdbAnalysis:
     def __init__(
-        self, cpdb, adata, *, pseudobulk_group_by: List[str], cell_type_column: str
+        self,
+        cpdb,
+        adata,
+        *,
+        pseudobulk_group_by: List[str],
+        cell_type_column: str,
+        min_obs=10,
     ):
         """
         Class that handles comparative cellphonedb analysis.
@@ -34,9 +40,12 @@ class CpdbAnalysis:
             of expressed cells by patient
         cell_type_column
             Column in anndata that contains the cell-type annotation.
+        min_obs
+            Only consider samples with at least `min_obs` cells for pseudobulk analysis.
         """
         self.cpdb = cpdb
         self.cell_type_column = cell_type_column
+        self.min_obs = min_obs
         self._find_expressed_genes(adata, pseudobulk_group_by)
 
     def _find_expressed_genes(self, adata, pseudobulk_group_by):
@@ -46,21 +55,31 @@ class CpdbAnalysis:
         pb_fracs = pseudobulk(
             adata,
             groupby=pseudobulk_group_by + [self.cell_type_column],
-            aggr_fun=lambda x, axis: np.sum(x > 0, axis) / x.shape[axis],  # type: ignore
+            aggr_fun=lambda x, axis: np.sum(x > 0, axis) / x.shape[axis],  # type: ignore,
+            min_obs=self.min_obs,
         )
         fractions_expressed = pseudobulk(
-            pb_fracs, groupby=self.cell_type_column, aggr_fun=np.mean, min_obs=0
+            # min obs = 0 here, as we just want the mean (not working on cells here, but replicates)
+            pb_fracs,
+            groupby=self.cell_type_column,
+            aggr_fun=np.mean,
+            min_obs=0,
         )
         fractions_expressed.obs.set_index(self.cell_type_column, inplace=True)
 
         pb = pseudobulk(
             adata,
             groupby=pseudobulk_group_by + [self.cell_type_column],
+            min_obs=self.min_obs,
         )
         sc.pp.normalize_total(pb, target_sum=1e6)
         sc.pp.log1p(pb)
         pb_mean_cell_type = pseudobulk(
-            pb, groupby=self.cell_type_column, aggr_fun=np.mean, min_obs=0
+            # min obs = 0 here, as we just want the mean (not working on cells here, but replicates)
+            pb,
+            groupby=self.cell_type_column,
+            aggr_fun=np.mean,
+            min_obs=0,
         )
         pb_mean_cell_type.obs.set_index(self.cell_type_column, inplace=True)
 

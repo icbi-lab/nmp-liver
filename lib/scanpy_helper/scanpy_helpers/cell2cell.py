@@ -95,6 +95,39 @@ class CpdbAnalysis:
             )
         )
 
+    @staticmethod
+    def _explode_complexes(db):
+        """
+        Split complexes into their individual genes, creating additional rows in the cell2cell interaction database.
+
+        This is required to implement the `complex_policy=explode`.
+        """
+        db = db.copy()
+
+        def _assert_split_as_expected(row):
+            """
+            Check that there's nothing unexpected in the database
+            (e.g. `_` in gene symbols would screw up the spliltting).
+            """
+            n_source = len(row["source_genesymbol"])
+            n_target = len(row["target_genesymbol"])
+            assert (n_source > 1) == ("COMPLEX:" in row["source"])
+            assert (n_target > 1) == ("COMPLEX:" in row["target"])
+            assert row["source"].count("_") == n_source - 1
+            assert row["target"].count("_") == n_target - 1
+
+        for col in ["source_genesymbol", "target_genesymbol"]:
+            db.loc[:, col] = db[col].str.split("_")
+
+        for _, row in db.iterrows():
+            _assert_split_as_expected(row)
+
+        db = db.explode(column=["source_genesymbol"]).explode(
+            column=["target_genesymbol"]
+        )
+
+        return db
+
     def significant_interactions(
         self,
         de_res: pd.DataFrame,
@@ -107,6 +140,7 @@ class CpdbAnalysis:
         adjust_fdr=True,
         min_frac_expressed=0.1,
         de_genes_mode: Literal["ligand", "receptor"] = "ligand",
+        complex_policy: Literal["ignore", "explode"] = "explode",
     ) -> pd.DataFrame:
         """
         Generates a data frame of differentiall cellphonedb interactions.
@@ -120,18 +154,42 @@ class CpdbAnalysis:
             List of differentially expressed genes
         pvalue_col
             column in de_res that contains the pvalue or false discovery rate
-        gene_id_col
+        fc_col
+            column in de_res that contains the log fold change
+        gene_symbol_col
             column in de_res that contains the gene symbol
+        max_pvalue
+            Only consider genes in `de_res` with a p-value lower than `max_pvalue` (after FDR-adjustion)
+        min_abs_fc
+            Only consider genes in `de_res` with at least this abs. log fold change
+        adjust_fdr
+            Adjust the false-discovery rate of the pvalues in `pvalue_col`. The FDR-adjustment happens
+            after the input table is filtered for genes that are in ligand/receptor database.
         min_frac_expressed
             Minimum fraction cells that need to express the receptor (or ligand) to be considered a potential interaction
         de_genes_mode
             If the list of de genes provided are ligands (default) or receptors. In case of `ligand`, cell-types
             that express corresonding receptors above the threshold will be identified. In case of `receptor`,
             cell-types that express corresponding ligands above the threshold will be identified.
-        adjust_fdr
-            If True, calculate false discovery rate on the pvalue, after filtering for genes that are contained
-            in the cellphonedb.
+        complex_policy
+            How to handle protein:protein complexes. Currently implemented options are
+
+              * ignore: Do nothing, i.e. treat complexes as if they were single genes. This usually means
+                that they will be removed from the result, because there is no corresponding gene symbol
+                (e.g. ITGA8_ITGB1) in the DE genes list or in the anndata object used to compute fractions/gene expression.
+              * explode: Split complexes into individual genes, essentially discard the information that the genes
+                form a complex
+
+            Future options could be `aggregate`, i.e. aggregate metrics of a complex to a single value
+            (e.g. by `min` as performed in the original CellPhoneDB publication)
         """
+        if complex_policy == "ignore":
+            cpdb = self.cpdb
+        elif complex_policy == "explode":
+            cpdb = self._explode_complexes(self.cpdb)
+        else:
+            raise ValueError("Invalid option for `complex_policy`.")
+
         if de_genes_mode == "ligand":
             cpdb_de_col = "source_genesymbol"
             cpdb_expr_col = "target_genesymbol"
@@ -141,7 +199,7 @@ class CpdbAnalysis:
         else:
             raise ValueError("Invalud value for de_genes_mode!")
 
-        de_res = de_res.loc[lambda x: x[gene_symbol_col].isin(self.cpdb[cpdb_de_col])]
+        de_res = de_res.loc[lambda x: x[gene_symbol_col].isin(cpdb[cpdb_de_col])]
         if adjust_fdr:
             de_res = fdr_correction(de_res, pvalue_col=pvalue_col, key_added="fdr")
             pvalue_col = "fdr"
@@ -150,7 +208,7 @@ class CpdbAnalysis:
             lambda x: (x[pvalue_col] < max_pvalue) & (np.abs(x[fc_col]) >= min_abs_fc),
             gene_symbol_col,
         ].unique()  # type: ignore
-        significant_interactions = self.cpdb.loc[
+        significant_interactions = cpdb.loc[
             lambda x: x[cpdb_de_col].isin(significant_genes)
         ]
 

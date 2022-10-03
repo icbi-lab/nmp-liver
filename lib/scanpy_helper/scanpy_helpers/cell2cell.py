@@ -233,13 +233,13 @@ class CpdbAnalysis:
         cpdb_res,
         *,
         pvalue_col="fdr",
-        group_col="group",
         fc_col="log2FoldChange",
+        group_col="group",
         title="CPDB analysis",
         aggregate=True,
         clip_fc_at=(-5, 5),
         label_limit=100,
-        cluster: Literal["heatmap", "dotplot"] = "dotplot",
+        cluster: Literal["heatmap", "dotplot", None] = "dotplot",
         de_genes_mode: Literal["ligand", "receptor"] = "ligand",
     ):
         """
@@ -249,10 +249,24 @@ class CpdbAnalysis:
         ----------
         cpdb_res
             result of `significant_interactions`. May be further filtered or modified.
+        pvalue_col
+            column in `cpdb_res` that contains the pvalue of ligands (or receptors) used for the upper panel of the
+            plot
+        fc_col
+            column in `cpdb_res` that contains the log fold change of ligands (or receptors) used for the upper panel of the
+            plot
         group_col
             column to be used for the y axis of the heatmap
+        title
+            main title of the plot
         aggregate
             whether to merge multiple targets of the same ligand into a single column
+        clip_at_fc
+            Limit the maximum log fold change at this value
+        label_limit
+            Maximum length before a gene symbol gets truncated (plays a role when using aggregate=True)
+        cluster
+            whether to cluster the heatmap or the dotplot or neither
         de_genes_mode
             If the list of de genes provided are ligands (default) or receptors. If receptor, will show the dotplot
             at the top (source are expressed ligands) and the de heatmap at the bottom (target are the DE receptors).
@@ -323,7 +337,7 @@ class CpdbAnalysis:
             )
             order = values_df.columns.values[
                 leaves_list(
-                    linkage(values_df.values.T, method="average", metric="euclidean")
+                    linkage(values_df.values.T, method="complete", metric="euclidean")
                 )
             ]
         else:

@@ -212,11 +212,15 @@ cell_type_fractions = (
 tmp_df = (
     cell_type_fractions.groupby(["timepoint", "cell_type"]).agg("mean").reset_index()
 )
-ch = alt.Chart(tmp_df).encode(
-    x="timepoint",
-    y="frac",
-    color=alt.Color("cell_type", scale=sh.colors.altair_scale("cell_type")),
-).mark_bar()
+ch = (
+    alt.Chart(tmp_df)
+    .encode(
+        x="timepoint",
+        y="frac",
+        color=alt.Color("cell_type", scale=sh.colors.altair_scale("cell_type")),
+    )
+    .mark_bar()
+)
 ch.save(f"{artifact_dir}/cell_type_fractions_patient_average_stacked_bar_chart.svg")
 ch.display()
 
@@ -368,15 +372,42 @@ msigdb
 # ### ORA
 
 # %%
+de_genes_per_cell_type = (
+    de_res_all.loc[lambda x: (x["padj"] < 0.01) & (np.abs(x["log2FoldChange"] > 1))]
+    .groupby("cell_type")
+    .size()
+    .reset_index(name="n")
+)
+de_genes_per_cell_type
+
+# %%
+median_de_genes = int(de_genes_per_cell_type.agg(("median"))["n"])
+
+# %%
+de_res_all.groupby(["cell_type"]).apply(
+    lambda x: x.sort_values("pvalue")
+    .loc[lambda x: np.abs(x["log2FoldChange"] > 1)]
+    .iloc[:median_de_genes]
+).reset_index(drop=True).groupby("cell_type").size().reset_index()
+
+# %%
 ora_pvals = dc.get_ora_df(
-    de_res_all.loc[lambda x: (x["padj"] < 0.01) & (np.abs(x["log2FoldChange"] > 1))],
+    de_res_all.groupby(["cell_type"])
+    .apply(
+        lambda x: x.sort_values("pvalue")
+        .loc[lambda x: np.abs(x["log2FoldChange"] > 1)]
+        .iloc[:median_de_genes]
+    )
+    .reset_index(drop=True),
+    # de_res_all.loc[lambda x: (x["padj"] < 0.01) & (np.abs(x["log2FoldChange"] > 1))],
     msigdb,
     groupby="cell_type",
     features="gene_id",
     source="geneset",
     target="genesymbol",
 )
-ora_score = -np.log10(ora_pvals)
+# add pseudocount of 1e-10 to avoid inf value. This means the max "score" is 10
+ora_score = -np.log10(ora_pvals+ 1e-10) 
 ora_score.name = "ora_estimate"
 
 # %%
@@ -406,6 +437,7 @@ sh.compare_groups.pl.plot_lm_result_altair(
     reverse=False,
     value_max=10,
     p_cutoff=np.inf,
+    cluster=True,
 )
 
 # %% [markdown]
@@ -432,7 +464,7 @@ sh.compare_groups.pl.plot_lm_result_altair(
     x="GSEA",
     title="GSEA scores by cell-type",
     p_cutoff=np.inf,
-    cluster=True,
+    cluster=False,
 )
 
 # %% [markdown]

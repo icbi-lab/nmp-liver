@@ -52,6 +52,35 @@ adata = sc.read_h5ad(adata_path)
 sc.pl.umap(adata, color="cell_type")
 
 # %% [markdown]
+# ## Markers
+
+# %%
+fig = sc.pl.dotplot(
+    adata,
+    groupby="cell_type_coarse",
+    var_names=[
+        "CST3",
+        "CSTB",
+        "MS4A7",
+        "MARCH1",
+        "HMOX1",
+        "CD68",
+        "MAFB",
+        "CD163",
+        "VCAN",
+        "CSF1R",
+        "CD300E",
+        "LIPA",
+        "SAMHD1",
+        "PSAP",
+        "TGFBI",
+    ],
+    cmap="coolwarm",
+    return_fig=True
+)
+fig.savefig(f"{artifact_dir}/myeloid_markers_dotplot.pdf", bbox_inches="tight")
+
+# %% [markdown]
 # ## Cluster overview
 
 # %%

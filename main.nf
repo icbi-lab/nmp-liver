@@ -10,6 +10,8 @@ include { JUPYTERNOTEBOOK as JUPYTER_MYELOID } from "./modules/local/jupyternote
 include { JUPYTERNOTEBOOK as JUPYTER_NEUTRO } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_DE_ANALYSIS } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_OVERVIEW_PLOTS } from "./modules/local/jupyternotebook/main"
+include { JUPYTERNOTEBOOK as JUPYTER_T0T1 } from "./modules/local/jupyternotebook/main"
+include { JUPYTERNOTEBOOK as JUPYTER_LIVER_QUALITY } from "./modules/local/jupyternotebook/main"
 include { DE_DESEQ2 as DESEQ_T0_T1 } from "./modules/local/scde.nf"
 include { DE_DESEQ2 as DESEQ_LT } from "./modules/local/scde.nf"
 include { DE_DESEQ2 as DESEQ_ECD } from "./modules/local/scde.nf"
@@ -114,6 +116,23 @@ workflow {
         ""
     )
 
+    ch_de_res_quality = DESEQ_ECD.out.de_res.mix(DESEQ_LT.out.de_res).collect()
+    ch_liver_quality = ch_adata_cell_types.concat(
+        Channel.fromPath("${projectDir}/tables/gene_sets_interleukins_chemokines.xlsx")
+    ).collect()
+    JUPYTER_LIVER_QUALITY(
+        Channel.value([
+            [id: "41_liver_quality"],
+            file("${projectDir}/analyses/41_liver_quality.py", checkIfExists: true)
+        ]),
+        ch_liver_quality.map{ adata, gene_set_il -> [
+            "adata_path": adata.name,
+            "gene_set_il_path": gene_set_il.name,
+            "de_res_dir": "."
+        ]},
+        ch_liver_quality.mix(ch_de_res_quality).collect()
+    )
+
     ch_overview_plots = ch_adata_cell_types.concat(
         Channel.fromPath("${projectDir}/tables/cell_type_markers.csv")
     ).collect()
@@ -128,5 +147,6 @@ workflow {
         ]},
         ch_overview_plots
     )
+
 
 }

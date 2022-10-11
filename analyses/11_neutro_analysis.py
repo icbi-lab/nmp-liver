@@ -54,6 +54,36 @@ adata = sc.read_h5ad(adata_path)
 sc.pl.umap(adata, color="cell_type")
 
 # %% [markdown]
+# ## Markers
+
+# %%
+fig = sc.pl.dotplot(
+    adata,
+    groupby="cell_type_coarse",
+    var_names=[
+        "IFITM2",
+        "CSF3R",
+        "H3F3A",
+        "S100A11",
+        "FPR1",
+        "FCGR3B",
+        "NAMPT",
+        "VNN2",
+        "BASP1",
+        "G0S2",
+        "MXD1",
+        "LITAF",
+        "CXCR2",
+        "S100A9",
+        "SOD2",
+        "SRGN",
+    ],
+    cmap="coolwarm",
+    return_fig=True
+)
+fig.savefig(f"{artifact_dir}/neutro_dotplot.pdf", bbox_inches="tight")
+
+# %% [markdown]
 # ## Cluster overview
 
 # %%

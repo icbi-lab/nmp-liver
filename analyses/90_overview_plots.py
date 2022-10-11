@@ -88,6 +88,10 @@ fig = ah.plot_dotplot(adata, groupby="cell_type", return_fig=True)
 fig.savefig(f"{artifact_dir}/dotplot_cell_types.pdf", bbox_inches="tight")
 
 # %%
+fig = ah.plot_dotplot(adata, groupby="cell_type_coarse", return_fig=True)
+fig.savefig(f"{artifact_dir}/dotplot_cell_types_coarse.pdf", bbox_inches="tight")
+
+# %%
 # %%capture
 for gene in [
     "PTPRC",
@@ -115,22 +119,21 @@ for gene in [
 # ## Cell-type fractions
 
 # %%
-per_patient = (
-    adata.obs.groupby(["patient_id", "cell_type"]).size().reset_index(name="n")
-)
-
-# %%
-ch = (
-    alt.Chart(per_patient)
-    .mark_bar()
-    .encode(
-        x=alt.X("n", stack="normalize"),
-        y="patient_id",
-        color=alt.Color("cell_type", scale=sh.colors.altair_scale("cell_type")),
+for col in ["cell_type", "cell_type_coarse"]:
+    per_patient = (
+        adata.obs.groupby(["patient_id", col]).size().reset_index(name="n")
     )
-)
-ch.save(f"{artifact_dir}/cell_type_barchart_per_patient.svg")
-ch
+    ch = (
+        alt.Chart(per_patient)
+        .mark_bar()
+        .encode(
+            x=alt.X("n", stack="normalize"),
+            y="patient_id",
+            color=alt.Color(col, scale=sh.colors.altair_scale(col)),
+        )
+    )
+    ch.save(f"{artifact_dir}/{col}_barchart_per_patient.svg")
+    ch.display()
 
 # %%
 per_sample = (

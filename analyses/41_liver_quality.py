@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
@@ -46,6 +47,7 @@ gene_set_il_path = nxfvars.get(
     "gene_set_il_path", "../tables/gene_sets_interleukins_chemokines.xlsx"
 )
 de_res_dir = nxfvars.get("de_res_dir", "../data/results/21_deseq/DESEQ_LT/")
+artifact_dir = nxfvars.get("artifact_dir", "/home/sturm/Downloads/nmp-temp/")
 
 # %%
 adata = sc.read_h5ad(adata_path)
@@ -70,7 +72,8 @@ pb.obs.drop(columns=["cell_type", "n_obs"]).drop_duplicates()
 de_res = {"T0": {}, "T1": {}}
 for f in Path(de_res_dir).glob("**/*.tsv"):
     _, timepoint, ct = f.name.replace("_DESeq2_result.tsv", "").split("_", maxsplit=2)
-    de_res[timepoint][ct] = pd.read_csv(f, sep="\t")
+    if timepoint in de_res:
+        de_res[timepoint][ct] = pd.read_csv(f, sep="\t")
 
 
 # %%
@@ -111,7 +114,7 @@ tmp_de_res.loc[lambda x: x["timepoint"] == "T0"].loc[lambda x: x["gene_id"] == "
 
 # %%
 for timepoint in ["T0", "T1"]:
-    sh.compare_groups.pl.plot_lm_result_altair(
+    ch = sh.compare_groups.pl.plot_lm_result_altair(
         tmp_de_res.loc[lambda x: x["timepoint"] == timepoint],
         x="gene_id",
         y="cell_type",
@@ -119,7 +122,9 @@ for timepoint in ["T0", "T1"]:
         color="log2FoldChange",
         title=f"LT ({timepoint})",
         p_cutoff=np.inf,
-    ).display()
+    )
+    ch.save(f"{artifact_dir}/interleukins_heatmap_LT_vs_not_LT_{timepoint}.svg")
+    ch.display()
 
 # %% [markdown]
 # ## Comparison by quality and timepoints
@@ -139,9 +144,6 @@ df_m = (
     .join(pb.obs)
     .loc[lambda x: x["cell_type"] == "Monocytes ⁄ Macrophages"]
 )
-
-# %%
-sc.pl.dotplot(adata, groupby="cell_type", var_names=["IL6", "ALB"])
 
 
 # %%
@@ -186,19 +188,23 @@ def make_paired_plot(tmp_df, hue):
 
     fig.tight_layout()
     sh.util.adjust_box_widths(fig, 0.8)
-    # return fig
+    return fig
 
 
 # %%
-make_paired_plot(df_neutro, "LT")
+fig = make_paired_plot(df_neutro, "LT")
+fig.savefig(f"{artifact_dir}/lt_neutro_pairplot.pdf", bbox_inches="tight")
 
 # %%
-make_paired_plot(df_neutro, "ECD")
+fig = make_paired_plot(df_neutro, "ECD")
+fig.savefig(f"{artifact_dir}/ecd_neutro_pairplot.pdf", bbox_inches="tight")
 
 # %%
-make_paired_plot(df_m, "LT")
+fig = make_paired_plot(df_m, "LT")
+fig.savefig(f"{artifact_dir}/lt_macro_mono_pairplot.pdf", bbox_inches="tight")
 
 # %%
-make_paired_plot(df_m, "ECD")
+fig = make_paired_plot(df_m, "ECD")
+fig.savefig(f"{artifact_dir}/ecd_macro_mono_pairplot.pdf", bbox_inches="tight")
 
 # %%

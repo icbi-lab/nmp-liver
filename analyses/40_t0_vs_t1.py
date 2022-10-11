@@ -233,14 +233,17 @@ ad_ct = sc.AnnData(
 ad_ct.obs = ad_ct.obs.reset_index()
 
 # %%
-sh.pairwise.plot_paired(
+fig = sh.pairwise.plot_paired(
     ad_ct,
     "timepoint",
     paired_by="patient_id",
     n_cols=8,
     panel_size=(2.4, 3.5),
     ylabel="frac",
+    palette=sh.colors.COLORS.patient_id,
+    return_fig=True
 )
+fig.savefig(f"{artifact_dir}/cell_type_fractions_patient_boxplot.pdf", bbox_inches="tight")
 
 # %% [markdown]
 # ### Highlighted genes
@@ -266,7 +269,7 @@ tmp_de_res = (
 )
 
 # %%
-sh.compare_groups.pl.plot_lm_result_altair(
+ch = sh.compare_groups.pl.plot_lm_result_altair(
     tmp_de_res,
     x="gene_id",
     y="cell_type",
@@ -274,26 +277,32 @@ sh.compare_groups.pl.plot_lm_result_altair(
     color="log2FoldChange",
     p_cutoff=np.inf,
 )
+ch.save(f"{artifact_dir}/t0_vs_v1_interleukins_heatmap.svg")
+ch.display()
 
 # %%
-sc.pl.dotplot(
+fig = sc.pl.dotplot(
     adata_t0t1[adata_t0t1.obs["cell_type"] == "Neutrophils"],
     var_names=gene_set_il["gene_symbol"],
     groupby="timepoint",
     cmap="coolwarm",
     swap_axes=True,
     title="Neutrophils",
+    return_fig=True
 )
+fig.savefig(f"{artifact_dir}/t0_vs_t1_dotplot_neutro.pdf", bbox_inches="tight")
 
 # %%
-sc.pl.dotplot(
+fig = sc.pl.dotplot(
     adata_t0t1[adata_t0t1.obs["cell_type"] == "Monocytes ⁄ Macrophages"],
     var_names=gene_set_il["gene_symbol"],
     groupby="timepoint",
     cmap="coolwarm",
     swap_axes=True,
     title="Macro/Mono",
+    return_fig=True
 )
+fig.savefig(f"{artifact_dir}/t0_vs_t1_dotplot_macro_mono.pdf", bbox_inches="tight")
 
 # %% [markdown]
 # ## Transcription factors (Dorothea)
@@ -332,9 +341,11 @@ def format_decoupler_results(tf_acts, tf_pvals, name="variable", contrast="contr
 tf_res = format_decoupler_results(tf_acts, tf_pvals, name="TF", contrast="cell_type")
 
 # %%
-sh.compare_groups.pl.plot_lm_result_altair(
+ch = sh.compare_groups.pl.plot_lm_result_altair(
     tf_res, y="cell_type", color="act_score", x="TF", title="TFs scores by cell-type"
 )
+ch.save(f"{artifact_dir}/t0_vs_t1_dorothea_tf_heatmap.svg")
+ch.display()
 
 # %% [markdown]
 # ### Check individual pathway
@@ -407,7 +418,7 @@ ora_pvals = dc.get_ora_df(
     target="genesymbol",
 )
 # add pseudocount of 1e-10 to avoid inf value. This means the max "score" is 10
-ora_score = -np.log10(ora_pvals+ 1e-10) 
+ora_score = -np.log10(ora_pvals + 1e-10)
 ora_score.name = "ora_estimate"
 
 # %%
@@ -426,7 +437,7 @@ ora_res = ora_res.merge(
 ).fillna({"act_score": 0, "pvalue": 1, "fdr": 1})
 
 # %%
-sh.compare_groups.pl.plot_lm_result_altair(
+ch = sh.compare_groups.pl.plot_lm_result_altair(
     ora_res.rename(columns={"act_score": "-log10(p)"}),
     y="cell_type",
     color="-log10(p)",
@@ -439,6 +450,8 @@ sh.compare_groups.pl.plot_lm_result_altair(
     p_cutoff=np.inf,
     cluster=True,
 )
+ch.save(f"{artifact_dir}/t0_vs_t1_hallmark_ora_fixed_gene_set_size.svg")
+ch.display()
 
 # %% [markdown]
 # ### GSEA
@@ -484,13 +497,15 @@ cpdb_res_n = cpdba.significant_interactions(
 )
 
 # %%
-cpdba.plot_result(
+ch = cpdba.plot_result(
     cpdb_res_n,
     group_col="comparison",
     aggregate=False,
     cluster="heatmap",
     title="CellChat analysis: Neutrophils T0 vs T1",
 )
+ch.save(f"{artifact_dir}/t0_vs_t1_cellchat_neutro.svg")
+ch.display()
 
 # %%
 cpdb_res_m = cpdba.significant_interactions(
@@ -498,52 +513,30 @@ cpdb_res_m = cpdba.significant_interactions(
 )
 
 # %%
-cpdba.plot_result(
+ch = cpdba.plot_result(
     cpdb_res_m,
     group_col="comparison",
     aggregate=False,
     cluster="heatmap",
     title="CellChat analysis: monocytic lineage T0 vs T1",
 )
+ch.save(f"{artifact_dir}/t0_vs_t1_cellchat_macro_mono.svg")
+ch.display()
 
 # %% [markdown]
 # ## Neutrophils
 
 # %%
-sc.pl.dotplot(
-    adata,
-    groupby="cell_type_coarse",
-    var_names=[
-        "IFITM2",
-        "CSF3R",
-        "H3F3A",
-        "S100A11",
-        "FPR1",
-        "FCGR3B",
-        "NAMPT",
-        "VNN2",
-        "BASP1",
-        "G0S2",
-        "MXD1",
-        "LITAF",
-        "CXCR2",
-        "S100A9",
-        "SOD2",
-        "SRGN",
-    ],
-    cmap="coolwarm",
-)
-
-# %%
 sc.pl.umap(adata_n, color=["patient_id", "timepoint", "cell_type"])
 
 # %%
-sc.pl.umap(adata_n, color=["CXCR2", "CXCR1", "CXCR4"], cmap="inferno", size=15)
+fig = sc.pl.umap(adata_n, color=["CXCR2", "CXCR1", "CXCR4"], cmap="inferno", size=15, return_fig=True)
+fig.savefig(f"{artifact_dir}/neutro_umap_cxcr.pdf", bbox_inches="tight", dpi=600)
 
 # %%
 genes = ["CXCR2", "CXCR1", "CXCL8", "CXCR4"]
 pvalues = de_res["Neutrophils"].set_index("gene_id").loc[genes, "padj"].tolist()
-sh.pairwise.plot_paired(
+fig = sh.pairwise.plot_paired(
     pb_n[pb_n.obs["timepoint"].isin(["T0", "T1"]), :],
     groupby="timepoint",
     paired_by="patient_id",
@@ -553,10 +546,14 @@ sh.pairwise.plot_paired(
     if x >= 0.0001
     else "FDR<0.0001, DESeq2",
     palette=sh.colors.COLORS.patient_id,
+    panel_size=(2.5, 4),
+    return_fig=True
 )
+fig.savefig(f"{artifact_dir}/neutro_t0_vs_t1_boxplot_cxcr.pdf", bbox_inches="tight")
 
 # %%
-sc.pl.umap(adata, color="CXCL8", cmap="inferno")
+fig = sc.pl.umap(adata, color="CXCL8", cmap="inferno", return_fig=True)
+fig.savefig(f"{artifact_dir}/umap_cxcl8.pdf")
 
 # %% [markdown]
 # ## monocytic lineage
@@ -565,35 +562,11 @@ sc.pl.umap(adata, color="CXCL8", cmap="inferno")
 sc.pl.umap(adata_m, color=["patient_id", "timepoint", "cell_type"])
 
 # %%
-sc.pl.dotplot(
-    adata,
-    groupby="cell_type_coarse",
-    var_names=[
-        "CST3",
-        "CSTB",
-        "MS4A7",
-        "MARCH1",
-        "HMOX1",
-        "CD68",
-        "MAFB",
-        "CD163",
-        "VCAN",
-        "CSF1R",
-        "CD300E",
-        "LIPA",
-        "SAMHD1",
-        "PSAP",
-        "TGFBI",
-    ],
-    cmap="coolwarm",
-)
-
-# %%
 genes = ["LYZ", "FCN1", "VCAN", "HLA-DRA", "CD163", "MARCO", "HMOX1", "VSIG4"]
 pvalues = (
     de_res["Monocytes ⁄ Macrophages"].set_index("gene_id").loc[genes, "padj"].tolist()
 )
-sh.pairwise.plot_paired(
+fig = sh.pairwise.plot_paired(
     pb_m[pb_m.obs["timepoint"].isin(["T0", "T1"]), :],
     groupby="timepoint",
     paired_by="patient_id",
@@ -603,6 +576,7 @@ sh.pairwise.plot_paired(
     if x >= 0.0001
     else "FDR<0.0001, DESeq2",
     palette=sh.colors.COLORS.patient_id,
+    return_fig=True,
+    panel_size=(2.5, 4)
 )
-
-# %%
+fig.savefig(f"{artifact_dir}/myeloid_t0_vs_t1_boxplot.pdf", bbox_inches="tight")

@@ -86,7 +86,7 @@ adata_m = sc.read_h5ad(adata_myeloid_path)
 
 # %%
 de_res = {}
-for f in Path(de_res_dir).glob("**/*.tsv"):
+for f in Path(de_res_dir).glob("**/*DESeq2_result.tsv"):
     ct = f.name.replace("_DESeq2_result.tsv", "").split("_", maxsplit=3)[-1]
     de_res[ct] = pd.read_csv(f, sep="\t")
 
@@ -209,19 +209,26 @@ cell_type_fractions = (
 )
 
 # %%
+cell_type_coarse_fractions = (
+    adata_t0t1.obs.groupby(["patient_id", "timepoint"])
+    .apply(
+        lambda x: x["cell_type_coarse"].value_counts(normalize=True).rename_axis("cell_type_coarse")
+    )
+    .reset_index(name="frac")
+)
 tmp_df = (
-    cell_type_fractions.groupby(["timepoint", "cell_type"]).agg("mean").reset_index()
+    cell_type_coarse_fractions.groupby(["timepoint", "cell_type_coarse"]).agg("mean").reset_index()
 )
 ch = (
     alt.Chart(tmp_df)
     .encode(
         x="timepoint",
         y="frac",
-        color=alt.Color("cell_type", scale=sh.colors.altair_scale("cell_type")),
+        color=alt.Color("cell_type_coarse", scale=sh.colors.altair_scale("cell_type_coarse")),
     )
     .mark_bar()
 )
-ch.save(f"{artifact_dir}/cell_type_fractions_patient_average_stacked_bar_chart.svg")
+ch.save(f"{artifact_dir}/cell_type_coarse_fractions_patient_average_stacked_bar_chart.svg")
 ch.display()
 
 # %%

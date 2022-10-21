@@ -116,6 +116,39 @@ workflow {
         ""
     )
 
+    ch_adata_m = JUPYTER_MYELOID.out.artifacts.flatten().filter{
+        it -> it.name.contains("adata_m")
+    }
+    ch_adata_n = JUPYTER_NEUTRO.out.artifacts.flatten().filter{
+        it -> it.name.contains("adata_n")
+    }
+
+    ch_t0t1 = ch_adata_cell_types.concat(
+        ch_adata_m,
+        ch_adata_n,
+        Channel.fromPath("${projectDir}/tables/dorothea_human_AB_2022-09-28.csv"),
+        Channel.fromPath("${projectDir}/tables/cellchatdb_2022-09-29.tsv"),
+        Channel.fromPath("${projectDir}/tables/gene_sets_hallmarks_msigdb.csv"),
+        Channel.fromPath("${projectDir}/tables/gene_sets_interleukins_chemokines.xlsx")
+    ).collect()
+    JUPYTER_T0T1(
+       Channel.value([
+            [id: "40_t0_vs_t1"],
+            file("${projectDir}/analyses/40_t0_vs_t1.py", checkIfExists: true)
+        ]),
+        ch_t0t1.map{ adata, adata_m, adata_n, dorothea, cellchatdb, msigdb, gene_set_il -> [
+            "adata_path": adata.name,
+            "adata_neutro_path": adata_n.name,
+            "adata_myeloid_path": adata_m.name,
+            "de_res_dir": ".",
+            "dorothea": dorothea.name,
+            "cellchatdb": cellchatdb.name,
+            "msigdb": msigdb.name,
+            "gene_set_il_path": gene_set_il.name
+        ]},
+        ch_t0t1.mix(DESEQ_T0_T1.out.de_res).collect()
+    )
+
     ch_de_res_quality = DESEQ_ECD.out.de_res.mix(DESEQ_LT.out.de_res).collect()
     ch_liver_quality = ch_adata_cell_types.concat(
         Channel.fromPath("${projectDir}/tables/gene_sets_interleukins_chemokines.xlsx")

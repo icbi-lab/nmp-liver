@@ -89,13 +89,22 @@ adata_m = adata[
 ].copy()
 
 # %%
-sc.pp.neighbors(adata_m, use_rep="X_scVI", n_neighbors=30)
+adata_m.shape
 
 # %%
-sc.tl.leiden(adata_m, resolution=0.25)
+adata_m = adata_m[adata_m.obs["timepoint"] != "T2", :].copy()
+
+# %%
+adata_m.shape
+
+# %%
+sc.pp.neighbors(adata_m, use_rep="X_scVI", n_neighbors=40)
 
 # %%
 sc.tl.umap(adata_m)
+
+# %%
+sc.tl.leiden(adata_m, resolution=0.3)
 
 # %%
 adata_m.obs["cell_type"] = ["M" + x for x in adata_m.obs["leiden"]]
@@ -106,19 +115,23 @@ sc.pp.normalize_total(pb_m, target_sum=1e6)
 sc.pp.log1p(pb_m, base=2)
 
 # %%
-for col in ["cell_type", "patient_id", "timepoint"]:
-    sh.colors.set_scale_anndata(
-        adata_m, col, "mono_clusters" if col == "cell_type" else None
-    )
+for col in ["cell_type", "patient_id", "timepoint", "sample_id"]:
+    if col != "sample_id":
+        sh.colors.set_scale_anndata(
+            adata_m, col, "mono_clusters" if col == "cell_type" else None
+        )
     legend_params = (
         dict(legend_loc="on data", legend_fontoutline=2) if col == "cell_type" else {}
     )
-    with plt.rc_context({"figure.figsize": (6, 6), "figure.dpi": 1200}):
+    with plt.rc_context({"figure.figsize": (6, 6)}):
         fig = sc.pl.umap(adata_m, color=col, return_fig=True, size=20, **legend_params)
         fig.savefig(
             f"{artifact_dir}/umap_myeloid_cluster_overview_{col}.pdf",
-            bbox_inches="tight",
+            bbox_inches="tight", dpi=1200
         )
+
+# %%
+adata_m.obs["cell_type"].value_counts()
 
 # %%
 tmp_df = (
@@ -215,6 +228,9 @@ sh.signatures.plot_markers(pb_m, "cell_type", markers, top=10, return_fig=False)
 
 # %%
 sh.signatures.plot_metric_strip(pb_m, markers, top=10)
+
+# %%
+sc.pl.umap(adata_m, color=["MARCO", "HMOX1", "CD5L"], cmap="inferno")
 
 # %%
 with plt.rc_context({"figure.figsize": (6, 6)}):

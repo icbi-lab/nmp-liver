@@ -74,11 +74,12 @@ sc.pp.log1p(pb_cell_type_coarse)
 # ## UMAP plots
 
 # %%
-for col in ["cell_type", "cell_type_coarse"]:
-    with plt.rc_context({"figure.figsize": (6, 6), "figure.dpi": 1200}):
-        sh.colors.set_scale_anndata(adata, col)
+for col in ["cell_type", "cell_type_coarse", "patient_id", "timepoint", "sample_id"]:
+    with plt.rc_context({"figure.figsize": (6, 6)}):
+        if col != "sample_id": 
+            sh.colors.set_scale_anndata(adata, col)
         fig = sc.pl.umap(adata, color=col, return_fig=True, size=10)
-        fig.savefig(f"{artifact_dir}/umap_{col}.pdf", bbox_inches="tight")
+        fig.savefig(f"{artifact_dir}/umap_{col}.pdf", bbox_inches="tight", dpi=1200)
 
 # %% [markdown]
 # ## Cell-type markers
@@ -149,11 +150,11 @@ per_sample.to_csv(f"{artifact_dir}/cell_type_coarse_counts_per_sample.csv")
 # ## Transcript counts
 
 # %%
-with plt.rc_context({"figure.figsize": (6, 6), "figure.dpi": 1200}):
+with plt.rc_context({"figure.figsize": (6, 6)}):
     fig = sc.pl.umap(
         adata, color="total_counts", vmax=20000, cmap="Reds", size=15, return_fig=True
     )
-    fig.savefig(f"{artifact_dir}/umap_total_counts.pdf", bbox_inches="tight")
+    fig.savefig(f"{artifact_dir}/umap_total_counts.pdf", bbox_inches="tight", dpi=1200)
 
 # %%
 mean_counts = (
@@ -175,14 +176,15 @@ ch = (
     alt.Chart(mean_counts)
     .mark_boxplot()
     .encode(
-        x=alt.X("cell_type_coarse", sort=order),
-        y=alt.Y("total_counts"),
+        y=alt.Y("cell_type_coarse", sort=order[::-1]),
+        x=alt.X("total_counts", title="UMI counts"),
         color=alt.Color(
-            "cell_type_coarse", scale=sh.colors.altair_scale("cell_type_coarse")
+            "cell_type_coarse", scale=sh.colors.altair_scale("cell_type_coarse"), legend=None
         ),
     )
-)
+).properties(width=300)
 ch.save(f"{artifact_dir}/transcript_counts_per_cell_type.svg")
+ch.display()
 
 # %% [markdown]
 # ## Gene expression across cell-types
@@ -231,6 +233,15 @@ sns.boxplot(
 )
 ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 _ = plt.xticks(rotation=90)
-# fig.savefig(f"{artifact_dir}/vegfa_fractions.pdf", bbox_inches="tight")
+fig.savefig(f"{artifact_dir}/vegfa_fractions.pdf", bbox_inches="tight")
+
+# %% [markdown]
+# ## QC plots
 
 # %%
+for obs, figsize in zip(["cell_type_coarse", "sample_id"], [(6,5), (7,5)]):
+    with plt.rc_context({"figure.figsize": figsize}):
+        for var, label in zip(["n_genes_by_counts", "pct_counts_mito"], ["n_genes", "% mitochondrial reads"]):
+            fig, ax = plt.subplots()
+            sc.pl.violin(adata, var, groupby=obs, rotation=90, ylabel=label, ax=ax)
+            fig.savefig(f"{artifact_dir}/qc_{var}_violin_by_{obs}.pdf", bbox_inches="tight")

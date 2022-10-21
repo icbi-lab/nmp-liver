@@ -90,7 +90,17 @@ fig.savefig(f"{artifact_dir}/neutro_dotplot.pdf", bbox_inches="tight")
 adata_n = adata[adata.obs["cell_type"].str.startswith("Neutro"), :].copy()
 
 # %%
-sc.pp.neighbors(adata_n, use_rep="X_scVI", n_neighbors=30)
+adata_n.shape
+
+# %%
+# Only T0 and T1
+adata_n = adata_n[adata_n.obs["timepoint"] != "T2", :].copy()
+
+# %%
+adata_n.shape
+
+# %%
+sc.pp.neighbors(adata_n, use_rep="X_scVI", n_neighbors=40)
 
 # %%
 sc.tl.umap(adata_n)
@@ -107,19 +117,23 @@ sc.pp.normalize_total(pb_n, target_sum=1e6)
 sc.pp.log1p(pb_n, base=2)
 
 # %%
-for col in ["cell_type", "patient_id", "timepoint"]:
-    sh.colors.set_scale_anndata(
-        adata_n, col, "neutro_clusters" if col == "cell_type" else None
-    )
+for col in ["cell_type", "patient_id", "timepoint", "sample_id"]:
+    if col != "sample_id":
+        sh.colors.set_scale_anndata(
+            adata_n, col, "neutro_clusters" if col == "cell_type" else None
+        )
     legend_params = (
         dict(legend_loc="on data", legend_fontoutline=2) if col == "cell_type" else {}
     )
-    with plt.rc_context({"figure.figsize": (6, 6), "figure.dpi": 1200}):
+    with plt.rc_context({"figure.figsize": (6, 6)}):
         fig = sc.pl.umap(adata_n, color=col, return_fig=True, size=20, **legend_params)
         fig.savefig(
             f"{artifact_dir}/umap_neutrophil_cluster_overview_{col}.pdf",
-            bbox_inches="tight",
+            bbox_inches="tight", dpi=1200
         )
+
+# %%
+adata_n.obs["cell_type"].value_counts()
 
 # %%
 tmp_df = (

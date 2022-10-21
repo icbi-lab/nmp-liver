@@ -105,7 +105,7 @@ def plot_paired_fc(
     )
 
     df_fc_melt = (
-        df_fc.melt(id_vars="patient")
+        df_fc.melt(id_vars=paired_by)
         .groupby(["variable"])
         .apply(lambda x: x.assign(mean=np.mean(x["value"])))
     ).reset_index(drop=True)

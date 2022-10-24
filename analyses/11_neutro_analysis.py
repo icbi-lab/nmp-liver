@@ -79,7 +79,7 @@ fig = sc.pl.dotplot(
         "SRGN",
     ],
     cmap="coolwarm",
-    return_fig=True
+    return_fig=True,
 )
 fig.savefig(f"{artifact_dir}/neutro_dotplot.pdf", bbox_inches="tight")
 
@@ -129,7 +129,8 @@ for col in ["cell_type", "patient_id", "timepoint", "sample_id"]:
         fig = sc.pl.umap(adata_n, color=col, return_fig=True, size=20, **legend_params)
         fig.savefig(
             f"{artifact_dir}/umap_neutrophil_cluster_overview_{col}.pdf",
-            bbox_inches="tight", dpi=1200
+            bbox_inches="tight",
+            dpi=1200,
         )
 
 # %%
@@ -188,11 +189,15 @@ ch.save(f"{artifact_dir}/timepoints_by_neutro_clusters.svg")
 ch.display()
 
 # %%
-ch = alt.Chart(tmp_df).encode(
+ch = (
+    alt.Chart(tmp_df)
+    .encode(
         color=alt.Color("timepoint", scale=sh.colors.altair_scale("timepoint")),
-    y=alt.Y("n_cells", stack="normalize"),
-    x="cell_type",
-).mark_bar()
+        y=alt.Y("n_cells", stack="normalize"),
+        x="cell_type",
+    )
+    .mark_bar()
+)
 ch.save(f"{artifact_dir}/neutro_clusters_per_timepoint.svg")
 
 # %% [markdown]
@@ -235,6 +240,27 @@ for cluster, m in markers.items():
     print(cluster)
     if len(m):
         sc.pl.umap(adata_n, color=m[:10], ncols=5, cmap="inferno", size=10)
+
+# %% [markdown]
+# ## Selected marker genes
+
+# %%
+fig = sc.pl.matrixplot(
+    pb_n,
+    groupby="cell_type",
+    var_names={
+        k: v.replace(" ", "").split(",")
+        for k, v in {
+            "N0": "S100A12, S100A8, S100A9, MMP8, MMP9, PADI4, ITGAM, ITGA1, ITGA6",
+            "N1": "ITGA4, TAF4 ",
+            "N2": "CXCR4, CD83, CCRL2, CCL3, CCL4, ICAM1, VEGFA, OLR1 ",
+            "N3": "SAA1, SAA2, IFIT1, IFIT2",
+        }.items()
+    },
+    cmap="inferno",
+    return_fig=True,
+)
+fig.savefig(f"{artifact_dir}/matrixplot_selected_markers_neutro.pdf", bbox_inches="tight")
 
 # %% [markdown]
 # ## Save results

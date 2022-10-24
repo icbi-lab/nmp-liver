@@ -76,7 +76,7 @@ fig = sc.pl.dotplot(
         "TGFBI",
     ],
     cmap="coolwarm",
-    return_fig=True
+    return_fig=True,
 )
 fig.savefig(f"{artifact_dir}/myeloid_markers_dotplot.pdf", bbox_inches="tight")
 
@@ -127,8 +127,16 @@ for col in ["cell_type", "patient_id", "timepoint", "sample_id"]:
         fig = sc.pl.umap(adata_m, color=col, return_fig=True, size=20, **legend_params)
         fig.savefig(
             f"{artifact_dir}/umap_myeloid_cluster_overview_{col}.pdf",
-            bbox_inches="tight", dpi=1200
+            bbox_inches="tight",
+            dpi=1200,
         )
+
+# %%
+with plt.rc_context({"figure.figsize": (6, 6)}):
+    fig = sc.pl.umap(adata_m, color="CD68", cmap="inferno", size=20, return_fig=True)
+    fig.savefig(
+        f"{artifact_dir}/umap_myeloid_cluster_CD68.pdf", bbox_inches="tight", dpi=1200
+    )
 
 # %%
 adata_m.obs["cell_type"].value_counts()
@@ -247,6 +255,29 @@ sc.pl.umap(
     color=["S100A8", "LYZ", "S100A9", "MARCO", "CD5L", "VSIG4", "VCAN", "FCN1", "CD14"],
     ncols=3,
     cmap="inferno",
+)
+
+# %% [markdown]
+# ## Selected markers
+
+# %%
+fig = sc.pl.matrixplot(
+    pb_n,
+    groupby="cell_type",
+    var_names={
+        k: v.replace(" ", "").split(",")
+        for k, v in {
+            "M0": "LYZ, VCAN, S100A8, S100A9, S100A12, MNDA",
+            "M1": "C1QB, C1QC, MRC1, HLA-DOA, FOLR2, AXL",
+            "M2": "CDKN1C, CYFIP2, CX3CR1 ",
+            "M3": "PLAU, CXCL5, CFS1, FPR3, SPP1, CTSL, CCL2, IL4I1, HS3ST1, DAB2, SERPINB2, SLC7A11, PHLDA1, MMP19, FABP5, NRP1, NRP2, RASGRP3, DHRS9, MT1H, GPNMB, FN1",
+        }.items()
+    },
+    cmap="inferno",
+    return_fig=True,
+)
+fig.savefig(
+    f"{artifact_dir}/matrixplot_selected_markers_neutro.pdf", bbox_inches="tight"
 )
 
 # %% [markdown]

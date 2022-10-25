@@ -93,7 +93,10 @@ for f in Path(de_res_dir).glob("**/*DESeq2_result.tsv"):
     de_res[ct] = pd.read_csv(f, sep="\t")
 
 # %%
-de_res_all = pd.concat([df.assign(cell_type=ct) for ct, df in de_res.items() if ct != "nk_and_t"])
+de_res_nk_and_t = de_res.pop("nk_and_t")
+
+# %%
+de_res_all = pd.concat([df.assign(cell_type=ct) for ct, df in de_res.items()])
 
 # %%
 logfc_mat = (
@@ -175,6 +178,19 @@ sc.pp.log1p(pb_n)
 # %%
 pb_m = dc.get_pseudobulk(
     adata_m,
+    sample_col="patient_id",
+    groups_col="timepoint",
+    min_prop=0.05,
+    min_cells=10,
+    min_counts=1000,
+    min_smpls=2,
+)
+sc.pp.normalize_total(pb_m, target_sum=1e6)
+sc.pp.log1p(pb_m)
+
+# %%
+pb_nkt = dc.get_pseudobulk(
+    adata_nkt,
     sample_col="patient_id",
     groups_col="timepoint",
     min_prop=0.05,
@@ -734,6 +750,20 @@ ch.display()
 # %%
 fig = sc.pl.matrixplot(pb_m, var_names=top_genes, cmap="viridis", groupby="timepoint", return_fig=True)
 fig.savefig(f"{artifact_dir}/myeloid_t0_vs_t1_heatmap_top_genes.pdf", bbox_inches="tight")
+
+# %% [markdown]
+# ## NK and T cells
+
+# %%
+top_genes = de_res_nk_and_t.assign(direction = lambda x: np.sign(x["log2FoldChange"])).groupby("direction").apply(lambda x: x.iloc[:30])["gene_id"]
+ch = sh.pairwise.plot_paired_fc(
+    pb_nkt,
+    groupby="timepoint",
+    paired_by="patient_id",
+    var_names=top_genes,
+).properties(height=200)
+ch.save(f"{artifact_dir}/nk_and_t_t0_vs_t1_fold_change_barchart_top_genes.svg")
+ch.display()
 
 # %% [markdown]
 # ## QC plots

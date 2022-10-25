@@ -51,6 +51,30 @@ adata = sc.read_h5ad(adata_path)
 sc.pl.umap(adata, color="cell_type")
 
 # %% [markdown]
+# ## Marker dotplot
+
+# %%
+t_markers = [
+    "CD3E",
+    "IL32",
+    "TRBC2",
+    "TRAC",
+    "CD2",
+    "ETS1",
+    "RUNX3",
+    "CCL5",
+    "IKZF3",
+    "FYN",
+    "CD3D",
+    "CD3G",
+    "CD69",
+    "FYN",
+    "CD8A",
+]
+fig = sc.pl.dotplot(adata, groupby="cell_type_coarse", var_names=t_markers, return_fig=True, cmap="coolwarm")
+fig.savefig(f"{artifact_dir}/nkt_dotplot.pdf", bbox_inches="tight")
+
+# %% [markdown]
 # ## Cluster overview
 
 # %%
@@ -75,14 +99,16 @@ sc.tl.umap(adata_nkt)
 # %%
 for col in ["cell_type", "cell_type_coarse", "patient_id", "timepoint", "sample_id"]:
     if col != "sample_id":
-        sh.colors.set_scale_anndata(
-            adata_nkt, col
-        )
+        sh.colors.set_scale_anndata(adata_nkt, col)
     legend_params = (
-        dict(legend_loc="on data", legend_fontoutline=2) if col == "cell_type" or col == "cell_type_coarse" else {}
+        dict(legend_loc="on data", legend_fontoutline=2)
+        if col == "cell_type" or col == "cell_type_coarse"
+        else {}
     )
     with plt.rc_context({"figure.figsize": (6, 6)}):
-        fig = sc.pl.umap(adata_nkt, color=col, return_fig=True, size=20, **legend_params)
+        fig = sc.pl.umap(
+            adata_nkt, color=col, return_fig=True, size=20, **legend_params
+        )
         fig.savefig(
             f"{artifact_dir}/umap_nkt_cluster_overview_{col}.pdf",
             bbox_inches="tight",
@@ -91,8 +117,10 @@ for col in ["cell_type", "cell_type_coarse", "patient_id", "timepoint", "sample_
 
 # %%
 for gene in ["KLRD1", "CD3E"]:
-     with plt.rc_context({"figure.figsize": (6, 6)}):
-        fig = sc.pl.umap(adata_nkt, color=gene, return_fig=True, size=20, cmap="inferno")
+    with plt.rc_context({"figure.figsize": (6, 6)}):
+        fig = sc.pl.umap(
+            adata_nkt, color=gene, return_fig=True, size=20, cmap="inferno"
+        )
         fig.savefig(
             f"{artifact_dir}/umap_nkt_cluster_overview_{col}.pdf",
             bbox_inches="tight",
@@ -104,7 +132,9 @@ adata_nkt.obs["cell_type"].value_counts()
 
 # %%
 tmp_df = (
-    adata_nkt.obs.groupby(["patient_id", "cell_type"]).size().reset_index(name="n_cells")
+    adata_nkt.obs.groupby(["patient_id", "cell_type"])
+    .size()
+    .reset_index(name="n_cells")
 )
 heatmp = (
     alt.Chart(tmp_df)

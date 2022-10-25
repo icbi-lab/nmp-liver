@@ -245,10 +245,7 @@ for cluster, m in markers.items():
 # ## Selected marker genes
 
 # %%
-fig = sc.pl.matrixplot(
-    pb_n,
-    groupby="cell_type",
-    var_names={
+markers = {
         k: v.replace(" ", "").split(",")
         for k, v in {
             "N0": "S100A12, S100A8, S100A9, MMP8, MMP9, PADI4, ITGAM, ITGA1, ITGA6",
@@ -256,7 +253,13 @@ fig = sc.pl.matrixplot(
             "N2": "CXCR4, CD83, CCRL2, CCL3, CCL4, ICAM1, VEGFA, OLR1 ",
             "N3": "SAA1, SAA2, IFIT1, IFIT2",
         }.items()
-    },
+    }
+
+# %%
+fig = sc.pl.matrixplot(
+    pb_n,
+    groupby="cell_type",
+    var_names=markers,
     cmap="inferno",
     return_fig=True,
 )

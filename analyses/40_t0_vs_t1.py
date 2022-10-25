@@ -50,6 +50,7 @@ adata_neutro_path = nxfvars.get(
 adata_myeloid_path = nxfvars.get(
     "adata_myeloid_path", "../data/results/10_myeloid_analysis//artifacts/adata_m.h5ad"
 )
+adata_nkt_path = nxfvars.get("adata_nkt_path", "../data/results/12_nk_and_t_analysis/artifacts/adata_nkt.h5ad")
 artifact_dir = nxfvars.get("artifact_dir", "/home/sturm/Downloads/nmp-temp/")
 de_res_dir = nxfvars.get("de_res_dir", "../data/results/21_deseq/DESEQ_T0_T1/")
 dorothea_net = nxfvars.get("dorothea", "../tables/dorothea_human_AB_2022-09-28.csv")
@@ -83,6 +84,7 @@ adata_t0t1 = adata[adata.obs["timepoint"].isin(["T0", "T1"]), :]
 # %%
 adata_n = sc.read_h5ad(adata_neutro_path)
 adata_m = sc.read_h5ad(adata_myeloid_path)
+adata_nkt = sc.read_h5ad(adata_nkt_path)
 
 # %%
 de_res = {}
@@ -91,7 +93,7 @@ for f in Path(de_res_dir).glob("**/*DESeq2_result.tsv"):
     de_res[ct] = pd.read_csv(f, sep="\t")
 
 # %%
-de_res_all = pd.concat([df.assign(cell_type=ct) for ct, df in de_res.items()])
+de_res_all = pd.concat([df.assign(cell_type=ct) for ct, df in de_res.items() if ct != "nk_and_t"])
 
 # %%
 logfc_mat = (
@@ -321,6 +323,18 @@ fig = sc.pl.dotplot(
 )
 fig.savefig(f"{artifact_dir}/t0_vs_t1_dotplot_macro_mono.pdf", bbox_inches="tight")
 
+# %%
+fig = sc.pl.dotplot(
+    adata_t0t1[adata_t0t1.obs["cell_type_coarse"].isin(["NK cells", "T cells"]), :],
+    var_names=gene_set_il["gene_symbol"],
+    groupby="timepoint",
+    cmap="coolwarm",
+    swap_axes=True,
+    title="T/NK",
+    return_fig=True,
+)
+fig.savefig(f"{artifact_dir}/t0_vs_t1_dotplot_t_nk.pdf", bbox_inches="tight")
+
 # %% [markdown]
 # ## Transcription factors (Dorothea)
 
@@ -509,8 +523,11 @@ cpdb_res_m = cpdba.significant_interactions(
 cpdb_res_m.to_csv(f"{artifact_dir}/cell2cell_res_myeloid.csv")
 
 # %%
+cpdb_res_m
+
+# %%
 ch = cpdba.plot_result(
-    cpdb_res_m,
+    cpdb_res_m.loc[lambda x: x["log2FoldChange"] > 0],
     group_col="comparison",
     aggregate=False,
     cluster="heatmap",
@@ -570,7 +587,7 @@ for name, genes in {"neutro_genes_of_interest": neutro_goi}.items():
         .tolist()
     )
     fig = sh.pairwise.plot_paired(
-        pb_m,
+        pb_n,
         groupby="timepoint",
         paired_by="patient_id",
         var_names=genes,
@@ -585,8 +602,8 @@ for name, genes in {"neutro_genes_of_interest": neutro_goi}.items():
     )
     for i, ax in enumerate(fig.axes):
         ax.set_ylim(
-            np.min(pb_m[:, genes].X) - 0.5,
-            np.max(pb_m[:, genes].X) + 0.5,
+            np.min(pb_n[:, genes].X) - 0.5,
+            np.max(pb_n[:, genes].X) + 0.5,
         )
         # ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
         if i > 0:
@@ -647,7 +664,7 @@ fig = sh.pairwise.plot_paired(
 fig.savefig(f"{artifact_dir}/myeloid_t0_vs_t1_boxplot.pdf", bbox_inches="tight")
 
 # %%
-goi_m_inflammatory = "LYZ, FCN1, VCAN, HLA-DRA, S100A8, S100A9, S100A12, CXCL8, MNDA, CSTA, CD74".replace(
+goi_m_inflammatory = "LYZ, FCN1, VCAN, HLA-DRA, S100A8, S100A9, S100A12, CXCL8, MNDA, CSTA, CD74, CCL2, CCL3".replace(
     " ", ""
 ).split(
     ","
@@ -677,7 +694,7 @@ for name, genes in {"inflammatory": goi_m_inflammatory, "tolerogenic": goi_m_tol
         return_fig=True,
         size=8,
         panel_size=(1, 4),
-        n_cols=12,
+        n_cols=15,
         show=False,
     )
     for i, ax in enumerate(fig.axes):

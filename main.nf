@@ -8,6 +8,7 @@ include { JUPYTERNOTEBOOK as JUPYTER_SCVI } from "./modules/local/jupyternoteboo
 include { JUPYTERNOTEBOOK as JUPYTER_CELL_TYPES } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_MYELOID } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_NEUTRO } from "./modules/local/jupyternotebook/main"
+include { JUPYTERNOTEBOOK as JUPYTER_NKT } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_DE_ANALYSIS } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_OVERVIEW_PLOTS } from "./modules/local/jupyternotebook/main"
 include { JUPYTERNOTEBOOK as JUPYTER_T0T1 } from "./modules/local/jupyternotebook/main"
@@ -79,6 +80,16 @@ workflow {
         ]},
         ch_adata_cell_types
     )
+    JUPYTER_NKT(
+        Channel.value([
+            [id: "12_nk_and_t_analysis"],
+            file("${projectDir}/analyses/12_nk_and_t_analysis.py", checkIfExists: true)
+        ]),
+        ch_adata_cell_types.map{ adata -> [
+            "adata_path": adata.name
+        ]},
+        ch_adata_cell_types
+    )
 
     JUPYTER_DE_ANALYSIS(
         Channel.value([
@@ -122,10 +133,14 @@ workflow {
     ch_adata_n = JUPYTER_NEUTRO.out.artifacts.flatten().filter{
         it -> it.name.contains("adata_n")
     }
+    ch_adata_nkt = JUPYTER_NKT.out.artifacts.flatten().filter{
+        it -> it.name.contains("adata_nkt")
+    }
 
     ch_t0t1 = ch_adata_cell_types.concat(
         ch_adata_m,
         ch_adata_n,
+        ch_adata_nkt,
         Channel.fromPath("${projectDir}/tables/dorothea_human_AB_2022-09-28.csv"),
         Channel.fromPath("${projectDir}/tables/cellchatdb_2022-09-29.tsv"),
         Channel.fromPath("${projectDir}/tables/gene_sets_hallmarks_msigdb.csv"),
@@ -136,10 +151,11 @@ workflow {
             [id: "40_t0_vs_t1"],
             file("${projectDir}/analyses/40_t0_vs_t1.py", checkIfExists: true)
         ]),
-        ch_t0t1.map{ adata, adata_m, adata_n, dorothea, cellchatdb, msigdb, gene_set_il -> [
+        ch_t0t1.map{ adata, adata_m, adata_n, adata_nkt, dorothea, cellchatdb, msigdb, gene_set_il -> [
             "adata_path": adata.name,
-            "adata_neutro_path": adata_n.name,
             "adata_myeloid_path": adata_m.name,
+            "adata_neutro_path": adata_n.name,
+            "adata_nkt_path": adata_nkt.name,
             "de_res_dir": ".",
             "dorothea": dorothea.name,
             "cellchatdb": cellchatdb.name,

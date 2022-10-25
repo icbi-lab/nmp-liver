@@ -111,6 +111,8 @@ for gene in [
     "JCHAIN",
     "ALB",
     "KRT18",
+    "FLT1",
+    "KRT19",
 ]:
     with plt.rc_context({"figure.figsize": (3, 3), "figure.dpi": 600}):
         fig = sc.pl.umap(adata, color=gene, return_fig=True)
@@ -133,6 +135,7 @@ for col in ["cell_type", "cell_type_coarse"]:
             color=alt.Color(col, scale=sh.colors.altair_scale(col)),
         )
     )
+    per_patient.to_csv(f"{artifact_dir}/{col}_counts_per_sample.csv")
     ch.save(f"{artifact_dir}/{col}_barchart_per_patient.svg")
     ch.display()
 
@@ -170,6 +173,18 @@ order = (
     .sort_values("total_counts")
     .index.tolist()
 )
+
+# %%
+adata.obs["total_counts"].mean()
+
+# %%
+adata.obs["total_counts"].median()
+
+# %%
+adata.obs.loc[lambda x: x["cell_type_coarse"] == "Neutrophils", "total_counts"].median()
+
+# %%
+adata.obs.loc[lambda x: x["cell_type_coarse"] == "Neutrophils", "total_counts"].mean()
 
 # %%
 ch = (

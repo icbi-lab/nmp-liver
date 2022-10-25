@@ -89,6 +89,33 @@ for ct, tmp_ad in tqdm(sh.util.split_anndata(adata[adata.obs["timepoint"].isin([
         save_pseudobulk(pb, f"{artifact_dir}/t0_vs_t1_{ct}.samplesheet.csv", f"{artifact_dir}/t0_vs_t1_{ct}.counts.csv")        
 
 # %% [markdown]
+# ### T and NK cells jointly
+
+# %%
+_adata_nkt = adata[adata.obs["timepoint"].isin(["T0", "T1"]) & adata.obs["cell_type_coarse"].isin(["NK cells", "T cells"]), :]
+
+# %%
+_adata_nkt.obs["cell_type"].value_counts()
+
+# %%
+_adata_nkt.obs["timepoint"].value_counts()
+
+# %%
+pb = dc.get_pseudobulk(
+    _adata_nkt,
+    sample_col="patient_id",
+    groups_col="timepoint",
+    min_prop=0.05,
+    min_cells=10,
+    min_counts=1000,
+    min_smpls=3
+)
+if pb.obs["timepoint"].nunique() <= 1:
+    print(f"Cell type {ct} does not have enough replicates per group")
+else:
+    save_pseudobulk(pb, f"{artifact_dir}/t0_vs_t1_nk_and_t.samplesheet.csv", f"{artifact_dir}/t0_vs_t1_nk_and_t.counts.csv")     
+
+# %% [markdown]
 # ### Transplanted vs. discarded and HQ vs marginal for all timepoints
 
 # %%

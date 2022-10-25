@@ -122,7 +122,7 @@ for gene in ["KLRD1", "CD3E"]:
             adata_nkt, color=gene, return_fig=True, size=20, cmap="inferno"
         )
         fig.savefig(
-            f"{artifact_dir}/umap_nkt_cluster_overview_{col}.pdf",
+            f"{artifact_dir}/umap_nkt_cluster_overview_{col}_{gene}.pdf",
             bbox_inches="tight",
             dpi=1200,
         )

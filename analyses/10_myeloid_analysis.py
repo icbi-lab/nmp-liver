@@ -261,24 +261,36 @@ sc.pl.umap(
 # ## Selected markers
 
 # %%
+markers = {
+    k: v.replace(" ", "").split(",")
+    for k, v in {
+        "M0": "LYZ, VCAN, S100A8, S100A9, S100A12, MNDA",
+        "M1": "C1QB, C1QC, MRC1, HLA-DOA, FOLR2, AXL",
+        "M2": "CDKN1C, CYFIP2, CX3CR1 ",
+        "M3": "PLAU, CXCL5, CSF1, FPR3, SPP1, CTSL, CCL2, IL4I1, HS3ST1, DAB2, SERPINB2, SLC7A11, PHLDA1, MMP19, FABP5, NRP1, NRP2, RASGRP3, DHRS9, MT1H, GPNMB, FN1",
+    }.items()
+}
+
+# %%
 fig = sc.pl.matrixplot(
     pb_m,
     groupby="cell_type",
-    var_names={
-        k: v.replace(" ", "").split(",")
-        for k, v in {
-            "M0": "LYZ, VCAN, S100A8, S100A9, S100A12, MNDA",
-            "M1": "C1QB, C1QC, MRC1, HLA-DOA, FOLR2, AXL",
-            "M2": "CDKN1C, CYFIP2, CX3CR1 ",
-            "M3": "PLAU, CXCL5, CSF1, FPR3, SPP1, CTSL, CCL2, IL4I1, HS3ST1, DAB2, SERPINB2, SLC7A11, PHLDA1, MMP19, FABP5, NRP1, NRP2, RASGRP3, DHRS9, MT1H, GPNMB, FN1",
-        }.items()
-    },
+    var_names=markers,
     cmap="inferno",
     return_fig=True,
 )
 fig.savefig(
     f"{artifact_dir}/matrixplot_selected_markers_macro_mono.pdf", bbox_inches="tight"
 )
+
+# %%
+fig = sc.pl.dotplot(
+    adata_m,
+    groupby="cell_type",
+    var_names=markers,
+    return_fig=True,
+)
+fig.savefig(f"{artifact_dir}/dotplot_selected_markers_macro_mono.pdf", bbox_inches="tight")
 
 # %% [markdown]
 # ## Save results

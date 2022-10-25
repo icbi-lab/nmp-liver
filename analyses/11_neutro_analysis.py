@@ -265,6 +265,15 @@ fig = sc.pl.matrixplot(
 )
 fig.savefig(f"{artifact_dir}/matrixplot_selected_markers_neutro.pdf", bbox_inches="tight")
 
+# %%
+fig = sc.pl.dotplot(
+    adata_n,
+    groupby="cell_type",
+    var_names=markers,
+    return_fig=True,
+)
+fig.savefig(f"{artifact_dir}/dotplot_selected_markers_neutro.pdf", bbox_inches="tight")
+
 # %% [markdown]
 # ## Save results
 

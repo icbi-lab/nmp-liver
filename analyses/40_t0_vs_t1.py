@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.1
+#       jupytext_version: 1.14.4
 #   kernelspec:
 #     display_name: Python [conda env:conda-2022-schneeberger-liver-scanpy]
 #     language: python
@@ -50,7 +50,9 @@ adata_neutro_path = nxfvars.get(
 adata_myeloid_path = nxfvars.get(
     "adata_myeloid_path", "../data/results/10_myeloid_analysis//artifacts/adata_m.h5ad"
 )
-adata_nkt_path = nxfvars.get("adata_nkt_path", "../data/results/12_nk_and_t_analysis/artifacts/adata_nkt.h5ad")
+adata_nkt_path = nxfvars.get(
+    "adata_nkt_path", "../data/results/12_nk_and_t_analysis/artifacts/adata_nkt.h5ad"
+)
 artifact_dir = nxfvars.get("artifact_dir", "/home/sturm/Downloads/nmp-temp/")
 de_res_dir = nxfvars.get("de_res_dir", "../data/results/21_deseq/DESEQ_T0_T1/")
 dorothea_net = nxfvars.get("dorothea", "../tables/dorothea_human_AB_2022-09-28.csv")
@@ -198,8 +200,8 @@ pb_nkt = dc.get_pseudobulk(
     min_counts=1000,
     min_smpls=2,
 )
-sc.pp.normalize_total(pb_m, target_sum=1e6)
-sc.pp.log1p(pb_m)
+sc.pp.normalize_total(pb_nkt, target_sum=1e6)
+sc.pp.log1p(pb_nkt)
 
 # %%
 sc.pl.umap(adata, color="cell_type")
@@ -588,7 +590,12 @@ for gene in genes:
     fig.savefig(f"{artifact_dir}/umap_{gene}.pdf", dpi=600)
 
 # %%
-neutro_goi = "CXCR1, CXCR2, CXCR4, CXCL8, VEGFA, ARG1, CD83, ICAM1, PTGS2, SELL, CCRL2, CCL3, CCL4".replace(
+# neutro_goi = "CXCR1, CXCR2, CXCR4, CXCL8, VEGFA, ARG1, CD83, ICAM1, PTGS2, SELL, CCRL2, CCL3, CCL4".replace(
+#     " ", ""
+# ).split(
+#     ","
+# )
+neutro_goi = "CXCR1, CXCR2, CXCR4, CD83, ICAM1, PTGS2, SELL, CCRL2, CCL3, CCL4, VEGFA".replace(
     " ", ""
 ).split(
     ","
@@ -596,19 +603,14 @@ neutro_goi = "CXCR1, CXCR2, CXCR4, CXCL8, VEGFA, ARG1, CD83, ICAM1, PTGS2, SELL,
 
 # %%
 for name, genes in {"neutro_genes_of_interest": neutro_goi}.items():
-    pvalues = (
-        de_res["Neutrophils"]
-        .set_index("gene_id")
-        .loc[genes, "padj"]
-        .tolist()
-    )
+    pvalues = de_res["Neutrophils"].set_index("gene_id").loc[genes, "padj"].tolist()
     fig = sh.pairwise.plot_paired(
         pb_n,
         groupby="timepoint",
         paired_by="patient_id",
         var_names=genes,
         pvalues=pvalues,
-        pvalue_template=lambda x: f"{x:.3f}" if x >= 0.001 else "<0.001",
+        pvalue_template=lambda x: f"{x:.2e}",  # lambda x: f"{x:.3f}" if x >= 0.001 else "<0.001",
         palette=sh.colors.COLORS.patient_id,
         return_fig=True,
         size=8,
@@ -626,7 +628,9 @@ for name, genes in {"neutro_genes_of_interest": neutro_goi}.items():
             ax.yaxis.set_ticklabels([])
             ax.set_ylabel(None)
     plt.subplots_adjust(wspace=0.25)
-    fig.savefig(f"{artifact_dir}/neutro_t0_vs_t1_boxplot_tight_{name}.pdf", bbox_inches="tight")
+    fig.savefig(
+        f"{artifact_dir}/neutro_t0_vs_t1_boxplot_tight_{name}.pdf", bbox_inches="tight"
+    )
 
 # %%
 ch = sh.pairwise.plot_paired_fc(
@@ -635,11 +639,18 @@ ch = sh.pairwise.plot_paired_fc(
     paired_by="patient_id",
     var_names=neutro_goi,
 ).properties(height=200)
-ch.save(f"{artifact_dir}/neutro_t0_vs_t1_fold_change_barchart_neutro_genes_of_interest.svg")
+ch.save(
+    f"{artifact_dir}/neutro_t0_vs_t1_fold_change_barchart_neutro_genes_of_interest.svg"
+)
 ch.display()
 
 # %%
-top_genes = de_res["Neutrophils"].assign(direction = lambda x: np.sign(x["log2FoldChange"])).groupby("direction").apply(lambda x: x.iloc[:30])["gene_id"]
+top_genes = (
+    de_res["Neutrophils"]
+    .assign(direction=lambda x: np.sign(x["log2FoldChange"]))
+    .groupby("direction")
+    .apply(lambda x: x.iloc[:30])["gene_id"]
+)
 ch = sh.pairwise.plot_paired_fc(
     pb_n,
     groupby="timepoint",
@@ -650,8 +661,12 @@ ch.save(f"{artifact_dir}/neutro_t0_vs_t1_fold_change_barchart_top_genes.svg")
 ch.display()
 
 # %%
-fig = sc.pl.matrixplot(pb_n, var_names=top_genes, cmap="viridis", groupby="timepoint", return_fig=True)
-fig.savefig(f"{artifact_dir}/neutro_t0_vs_t1_heatmap_top_genes.pdf", bbox_inches="tight")
+fig = sc.pl.matrixplot(
+    pb_n, var_names=top_genes, cmap="viridis", groupby="timepoint", return_fig=True
+)
+fig.savefig(
+    f"{artifact_dir}/neutro_t0_vs_t1_heatmap_top_genes.pdf", bbox_inches="tight"
+)
 
 # %% [markdown]
 # ## monocytic lineage
@@ -686,13 +701,16 @@ goi_m_inflammatory = "LYZ, FCN1, VCAN, HLA-DRA, S100A8, S100A9, S100A12, CXCL8, 
     ","
 )
 goi_m_tolerogenic = (
-    " CD163, MARCO, HMOX1, VSIG4, CD5L, NSMAF, CTSB, VMO1, HMOX1".replace(
+    " CD163, MARCO, VSIG4, NSMAF, CTSB, VMO1, HMOX1".replace(
         " ", ""
     ).split(",")
 )
 
 # %%
-for name, genes in {"inflammatory": goi_m_inflammatory, "tolerogenic": goi_m_tolerogenic}.items():
+for name, genes in {
+    "inflammatory": goi_m_inflammatory,
+    "tolerogenic": goi_m_tolerogenic,
+}.items():
     pvalues = (
         de_res["Monocytes ⁄ Macrophages"]
         .set_index("gene_id")
@@ -705,7 +723,7 @@ for name, genes in {"inflammatory": goi_m_inflammatory, "tolerogenic": goi_m_tol
         paired_by="patient_id",
         var_names=genes,
         pvalues=pvalues,
-        pvalue_template=lambda x: f"{x:.3f}" if x >= 0.001 else "<0.001",
+        pvalue_template=lambda x: f"{x:.2e}",  # lambda x: f"{x:.3f}" if x >= 0.001 else "<0.001",
         palette=sh.colors.COLORS.patient_id,
         return_fig=True,
         size=8,
@@ -723,10 +741,15 @@ for name, genes in {"inflammatory": goi_m_inflammatory, "tolerogenic": goi_m_tol
             ax.yaxis.set_ticklabels([])
             ax.set_ylabel(None)
     plt.subplots_adjust(wspace=0.25)
-    fig.savefig(f"{artifact_dir}/myeloid_t0_vs_t1_boxplot_tight_{name}.pdf", bbox_inches="tight")
+    fig.savefig(
+        f"{artifact_dir}/myeloid_t0_vs_t1_boxplot_tight_{name}.pdf", bbox_inches="tight"
+    )
 
 # %%
-for name, genes in {"inflammatory": goi_m_inflammatory, "tolerogenic": goi_m_tolerogenic}.items():
+for name, genes in {
+    "inflammatory": goi_m_inflammatory,
+    "tolerogenic": goi_m_tolerogenic,
+}.items():
     ch = sh.pairwise.plot_paired_fc(
         pb_m,
         groupby="timepoint",
@@ -737,7 +760,12 @@ for name, genes in {"inflammatory": goi_m_inflammatory, "tolerogenic": goi_m_tol
     ch.display()
 
 # %%
-top_genes = de_res["Monocytes ⁄ Macrophages"].assign(direction = lambda x: np.sign(x["log2FoldChange"])).groupby("direction").apply(lambda x: x.iloc[:30])["gene_id"]
+top_genes = (
+    de_res["Monocytes ⁄ Macrophages"]
+    .assign(direction=lambda x: np.sign(x["log2FoldChange"]))
+    .groupby("direction")
+    .apply(lambda x: x.iloc[:30])["gene_id"]
+)
 ch = sh.pairwise.plot_paired_fc(
     pb_m,
     groupby="timepoint",
@@ -748,14 +776,22 @@ ch.save(f"{artifact_dir}/myeloid_t0_vs_t1_fold_change_barchart_top_genes.svg")
 ch.display()
 
 # %%
-fig = sc.pl.matrixplot(pb_m, var_names=top_genes, cmap="viridis", groupby="timepoint", return_fig=True)
-fig.savefig(f"{artifact_dir}/myeloid_t0_vs_t1_heatmap_top_genes.pdf", bbox_inches="tight")
+fig = sc.pl.matrixplot(
+    pb_m, var_names=top_genes, cmap="viridis", groupby="timepoint", return_fig=True
+)
+fig.savefig(
+    f"{artifact_dir}/myeloid_t0_vs_t1_heatmap_top_genes.pdf", bbox_inches="tight"
+)
 
 # %% [markdown]
 # ## NK and T cells
 
 # %%
-top_genes = de_res_nk_and_t.assign(direction = lambda x: np.sign(x["log2FoldChange"])).groupby("direction").apply(lambda x: x.iloc[:30])["gene_id"]
+top_genes = (
+    de_res_nk_and_t.assign(direction=lambda x: np.sign(x["log2FoldChange"]))
+    .groupby("direction")
+    .apply(lambda x: x.iloc[:30])["gene_id"]
+)
 ch = sh.pairwise.plot_paired_fc(
     pb_nkt,
     groupby="timepoint",
@@ -769,25 +805,63 @@ ch.display()
 # ## QC plots
 
 # %%
-df_qc = adata_t0t1.obs.groupby(["patient_id", "timepoint"], observed=True).agg(
-    umi_counts=("total_counts", "mean"),
-    n_genes=("n_genes_by_counts", "mean"),
-    pct_mito=("pct_counts_mito", "mean"),
-).reset_index()
+df_qc = (
+    adata_t0t1.obs.groupby(["patient_id", "timepoint"], observed=True)
+    .agg(
+        umi_counts=("total_counts", "mean"),
+        n_genes=("n_genes_by_counts", "mean"),
+        pct_mito=("pct_counts_mito", "mean"),
+    )
+    .reset_index()
+)
 tmp_ad = sc.AnnData(df_qc.loc[:, ["umi_counts", "n_genes", "pct_mito"]], obs=df_qc)
 
 # %%
 tmp_ad
 
 # %%
-fig = sh.pairwise.plot_paired(tmp_ad, "timepoint", paired_by="patient_id", palette=sh.colors.COLORS.patient_id, return_fig=True)
+fig = sh.pairwise.plot_paired(
+    tmp_ad,
+    "timepoint",
+    paired_by="patient_id",
+    palette=sh.colors.COLORS.patient_id,
+    return_fig=True,
+)
 fig.savefig(f"{artifact_dir}/t0_vs_t1_qc_metrics.pdf", bbox_inches="tight")
 
 # %%
-qc_genes=["FOS", "JUN", "JUNB", "JUND", "ATF3", "EGR1", "HSPA1A", "HSPA1B", "HSP90AB1", "HSPA8", "IER3", "IER2", "BTG1", "BTG2", "DUSP1", "LMNA", "CYCS", "DDIT3", "APAF1", "BAX", "BAK1", "CASP3", "CASP9"]
+qc_genes = [
+    "FOS",
+    "JUN",
+    "JUNB",
+    "JUND",
+    "ATF3",
+    "EGR1",
+    "HSPA1A",
+    "HSPA1B",
+    "HSP90AB1",
+    "HSPA8",
+    "IER3",
+    "IER2",
+    "BTG1",
+    "BTG2",
+    "DUSP1",
+    "LMNA",
+    "CYCS",
+    "DDIT3",
+    "APAF1",
+    "BAX",
+    "BAK1",
+    "CASP3",
+    "CASP9",
+]
 
 # %%
-fig = sc.pl.dotplot(adata_t0t1, var_names=qc_genes, groupby="timepoint", cmap="viridis", return_fig=True)
-fig.savefig(f"{artifact_dir}/t0_vs_t1_stress_apoptosis_genes_dotplot.pdf", bbox_inches="tight")
+fig = sc.pl.dotplot(
+    adata_t0t1, var_names=qc_genes, groupby="timepoint", cmap="viridis", return_fig=True
+)
+fig.savefig(
+    f"{artifact_dir}/t0_vs_t1_stress_apoptosis_genes_dotplot.pdf", bbox_inches="tight"
+)
 
 # %%

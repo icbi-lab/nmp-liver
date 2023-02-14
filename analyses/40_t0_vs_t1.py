@@ -595,10 +595,10 @@ for gene in genes:
 # ).split(
 #     ","
 # )
-neutro_goi = "CXCR1, CXCR2, CXCR4, CD83, ICAM1, PTGS2, SELL, CCRL2, CCL3, CCL4, VEGFA".replace(
-    " ", ""
-).split(
-    ","
+neutro_goi = (
+    "CXCR1, CXCR2, CXCR4, CD83, ICAM1, PTGS2, SELL, CCRL2, CCL3, CCL4, VEGFA".replace(
+        " ", ""
+    ).split(",")
 )
 
 # %%
@@ -638,6 +638,9 @@ ch = sh.pairwise.plot_paired_fc(
     groupby="timepoint",
     paired_by="patient_id",
     var_names=neutro_goi,
+    # data is already (natural) log-transformed, so diff represents logFC
+    metric="diff",
+    metric_name="logFC",
 ).properties(height=200)
 ch.save(
     f"{artifact_dir}/neutro_t0_vs_t1_fold_change_barchart_neutro_genes_of_interest.svg"
@@ -656,6 +659,8 @@ ch = sh.pairwise.plot_paired_fc(
     groupby="timepoint",
     paired_by="patient_id",
     var_names=top_genes,
+    metric="diff",
+    metric_name="logFC",
 ).properties(height=200)
 ch.save(f"{artifact_dir}/neutro_t0_vs_t1_fold_change_barchart_top_genes.svg")
 ch.display()
@@ -700,11 +705,9 @@ goi_m_inflammatory = "LYZ, FCN1, VCAN, HLA-DRA, S100A8, S100A9, S100A12, CXCL8, 
 ).split(
     ","
 )
-goi_m_tolerogenic = (
-    " CD163, MARCO, VSIG4, NSMAF, CTSB, VMO1, HMOX1".replace(
-        " ", ""
-    ).split(",")
-)
+goi_m_tolerogenic = " CD163, MARCO, VSIG4, NSMAF, CTSB, VMO1, HMOX1".replace(
+    " ", ""
+).split(",")
 
 # %%
 for name, genes in {
@@ -755,6 +758,8 @@ for name, genes in {
         groupby="timepoint",
         paired_by="patient_id",
         var_names=genes,
+        metric="diff",
+        metric_name="logFC",
     ).properties(height=200)
     ch.save(f"{artifact_dir}/myeloid_t0_vs_t1_fold_change_barchart_{name}.svg")
     ch.display()
@@ -771,6 +776,8 @@ ch = sh.pairwise.plot_paired_fc(
     groupby="timepoint",
     paired_by="patient_id",
     var_names=top_genes,
+    metric="diff",
+    metric_name="logFC",
 ).properties(height=200)
 ch.save(f"{artifact_dir}/myeloid_t0_vs_t1_fold_change_barchart_top_genes.svg")
 ch.display()
@@ -797,6 +804,8 @@ ch = sh.pairwise.plot_paired_fc(
     groupby="timepoint",
     paired_by="patient_id",
     var_names=top_genes,
+    metric="diff",
+    metric_name="logFC",
 ).properties(height=200)
 ch.save(f"{artifact_dir}/nk_and_t_t0_vs_t1_fold_change_barchart_top_genes.svg")
 ch.display()

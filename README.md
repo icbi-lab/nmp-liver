@@ -12,7 +12,7 @@ The preprocessed data and singularity containers required to run this workflow a
 
 ### 1. Prerequisites
 
-* [Nextflow](https://www.nextflow.io/index.html#GetStarted), version 22.04.5 or higher
+* [Nextflow](https://www.nextflow.io/index.html#GetStarted), version 22.04.5
 * [Singularity/Apptainer](https://apptainer.org/), version 3.7 or higher (tested with 3.7.0-1.el7)
 
 ### 2. Obtain data
@@ -48,7 +48,8 @@ workflow on our on-premise cluster.
 ### 4. Launch the workflows
 
 ```bash
-nextflow run main.nf -resume -profile <YOUR_PROFILE> \
+# Newer versions of nextflow break the code in this repo. Using `NXF_VER`, we can pin the version.
+NXF_VER=22.04.5 nextflow run main.nf -resume -profile <YOUR_PROFILE> \
     --outdir "./data/results"
 ```
 
